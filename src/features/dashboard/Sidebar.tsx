@@ -93,10 +93,15 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           type="button"
           className={styles.backToLogin}
           onClick={() => {
-            signOut();
+            const logoutResult = signOut();
             onClose();
             toast(t('auth.signedOut'), 'info');
             navigate('/login');
+            void logoutResult.then((remoteSucceeded) => {
+              if (!remoteSucceeded) {
+                toast(t('auth.remoteLogoutFailed'), 'error');
+              }
+            });
           }}
         >
           <LogOut size={15} strokeWidth={1.8} aria-hidden="true" />

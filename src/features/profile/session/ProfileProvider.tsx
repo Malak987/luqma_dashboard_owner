@@ -11,7 +11,7 @@ interface ProfileProviderProps {
 }
 
 export function ProfileProvider({ children }: ProfileProviderProps) {
-  const { authReady, invalidateSession } = useSession();
+  const { authReady, invalidateSession, session } = useSession();
   const [profile, setProfile] = useState<OwnerProfile | null>(null);
   const [status, setStatus] = useState<ProfileStatus>('idle');
   const [error, setError] = useState<unknown>(null);
@@ -43,10 +43,22 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   }, [handleProfileError]);
 
   useEffect(() => {
+    if (!session) {
+      // Profile data is protected in-memory state. Do not retain it while the
+      // authenticated session is being cleared or after sign-out.
+      setProfile(null);
+      setStatus('idle');
+      setError(null);
+      setSaveError(null);
+      setRefreshError(null);
+      setSaving(false);
+      return;
+    }
+
     if (authReady) {
       void reload();
     }
-  }, [authReady, reload]);
+  }, [authReady, reload, session]);
 
   const save = useCallback(
     async (request: UpdateProfileRequest) => {

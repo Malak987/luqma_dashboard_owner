@@ -1,117 +1,170 @@
-# Luqma API Contract Audit — Dashboard Integration
+# Luqma API Contract Audit — Owner Dashboard Phase 2
 
 **Base URL:** `https://luqma-api.runasp.net`
-**Audit date:** 2026-11-23
-**Status:** Partial integration. Login is implemented from the supplied contract. All other Account/Store operations are blocked because the supplied documentation does not include the request/response schemas needed to implement them without guessing.
+**Audit date:** 2026-11-24
+**Status:** Partial, safety-first integration; Store critical operations remain blocked.
 
-## Sources reviewed
+This audit covers the existing frontend, the supplied integration brief, the
+workspace copy at [`docs/api/swagger.json`](./swagger.json), and the public
+Swagger document at
+[`https://luqma-api.runasp.net/swagger/v1/swagger.json`](https://luqma-api.runasp.net/swagger/v1/swagger.json).
+The Swagger document was read as documentation only. No authenticated API
+request was made and no live account was used.
 
-- The endpoint and schema details supplied directly in the integration task brief.
-- The existing frontend source tree and its current mock-data assumptions.
+A separate read-only inspection found a public C# repository that appears to be
+a backend source candidate (`minasameh11/luqma`, commit `2d7dc23489c7`). It is
+not present in this dashboard checkout and its deployment linkage is not
+proven. Its Store DTOs omit `ownerEmail`/`ownerPassword`, while the deployed
+Swagger includes them; source findings below are therefore implementation
+evidence to reconcile, not a substitute for the deployed contract.
 
-**No Swagger/OpenAPI file, Postman collection, Postman environment, or other API document was present in the workspace.** No production endpoint was called during this audit. No Swagger URL was fetched. There is therefore no Swagger-vs-Postman comparison to report.
+## Authorization boundary
 
-## Endpoint inventory
+- The dashboard accepts only the exact string role `Owner`.
+- `Admin`, `User`, numeric roles, mixed-case values, and all unsupported roles
+  are rejected by login/session/profile validation.
+- Swagger declares a global Bearer security scheme, but it does not describe
+  per-operation roles or owner permissions. The backend must remain
+  authoritative for the Owner role and every resource ownership check.
+- `GetProfile` does not document a `storeId`, and its successful response has
+  no OpenAPI response schema. The supplied brief's profile example is used for
+  strict parsing, including the exact `Owner` role check.
+- No documented endpoint returns a verified mapping between the authenticated
+  Owner and a Store. `Store/GetAll` is a public-looking listing shape with
+  filters, no response schema, and no owner-specific semantics. It is not used
+  as an ownership source.
 
-| # | Endpoint | Method | Documented request | Documented success response | Auth / roles | Status |
-|---|---|---|---|---|---|---|
-| 1 | `/api/Account/Login` | POST | `{ email, password }` | Envelope: `message`, `data { userId, userName, role, token, expiresAt }`, `isSucceeded`, `timestamp` | Anonymous; returns role for validation | **Implemented** against the supplied shape |
-| 2 | `/api/Account/Logout` | POST | **Not supplied** | **Not supplied** | Bearer assumed by the brief, exact requirement not documented | **Blocked** — route only |
-| 3 | `/api/Account/ForgotPassword` | POST | **Not supplied** | **Not supplied** | Not documented | **Blocked** — route only |
-| 4 | `/api/Account/ResetPassword` | POST | **Not supplied** | **Not supplied** | Not documented | **Blocked** — route only |
-| 5 | `/api/Account/GetUserById/{id}` | GET | Path `{id}`; ID type/format not supplied | **Not supplied** | Not documented | **Blocked** — route only |
-| 6 | `/api/Account/GetProfile` | GET | No parameters documented | **Not supplied** | Bearer assumed by the brief, exact requirement not documented | **Blocked** |
-| 7 | `/api/Account/UpdateProfile` | PUT | **Editable fields not supplied** | **Not supplied** | Not documented | **Blocked** |
-| 8 | `/api/Store/GetAll` | GET | Query names supplied: `mainCategoryId`, `cuisineId`, `isOpenNow`, `isActive`, `latitude`, `longitude`, `pageNumber`, `pageSize` | Envelope with `message`, `data`, `isSucceeded`, `timestamp`; exact store fields and pagination metadata **not supplied** | Auth/roles not documented | **Blocked** — insufficient schema and read-only |
+## Endpoints implemented safely
 
-## Login contract implemented
+| Endpoint | Contract reviewed | Frontend status |
+|---|---|---|
+| `POST /api/Account/Login` | `{ email, password }`; existing envelope/login identity from the brief | Implemented before this phase; exact Owner gate retained |
+| `POST /api/Account/Logout` | No body; HTTP 200; no response schema | Implemented. Captures the Bearer token, clears local/session and protected in-memory state first, then attempts remote logout. A remote failure cannot restore local authentication. |
+| `GET /api/Account/GetProfile` | Brief envelope and profile example; Swagger has no response schema | Implemented with strict envelope/profile parsing and exact `Owner` validation |
+| `PUT /api/Account/UpdateProfile` | `UpdateProfileRequest` has exactly `userName`, `email`, `phoneNumber`, `address`; no required list; HTTP 200 without a schema | Implemented with client validation, exact request serialization, safe server-error handling, and a profile refresh after success |
+| `GET /api/MainCategory/GetAll?onlyActive=true` | Query parameter is documented; item shape comes from the brief; Swagger has no response schema | Implemented read-only service. It uses `onlyActive=true` by default, validates items, filters active entries defensively, and sorts by `displayOrder`. No main-category mutations are exposed. |
 
-```text
-POST /api/Account/Login
-Content-Type: application/json
+The account and category services use the existing centralized API client, so
+Bearer attachment, 401 session invalidation, 403 errors, timeouts, network
+errors, and malformed JSON are normalized in one place.
 
-{ "email": string, "password": string }
-```
+## Store contract findings
 
-Documented response envelope:
+The live Swagger `UpdateStoreRequest` contains these properties, all without a
+`required` array:
 
-```text
-{
-  message: string,
-  data: {
-    userId: string,
-    userName: string,
-    role: string,
-    token: string,
-    expiresAt: string
-  } | null,
-  isSucceeded: boolean,
-  timestamp: string | number
-}
-```
+- `nameAr`, `nameEn`, `phoneNumber`, `address`, `iconUrl`
+- `descriptionAr`, `descriptionEn`, `mainCategoryId`
+- `openTime`, `closeTime`, `priceLevel`
+- `deliveryTimeMinutes`, `deliveryFee`, `latitude`, `longitude`
+- `isActive`, `ownerId`, `ownerEmail`, `ownerPassword`
+- `cuisineIds`, `imageUrls`
 
-Implementation rules:
+The sensitive properties are nullable in the OpenAPI schema, but Swagger does
+not document that an Owner may edit ownership, credentials, or platform
+activation. The frontend therefore never reads, stores, logs, displays, or
+serializes `ownerPassword`, and never serializes `ownerId`, `ownerEmail`, or
+`isActive`. A guarded serializer and request service accept only the
+non-sensitive editable subset and require a backend-verified owner/store scope.
+No Store edit form calls it because the required scope cannot currently be
+obtained safely.
 
-- `isSucceeded` must be exactly `true`.
-- `data` must be present.
-- `role` must be exactly `Owner`; missing, empty, mixed-case, malformed, `Admin`, and unknown roles are rejected. No session is created.
-- `userId` and `userName` must be non-empty strings.
-- `token` must be a non-empty string; it is treated as opaque and never decoded for authorization.
-- `expiresAt` must parse as a future date. The exact server date format was not documented; the implementation accepts any value `Date.parse` accepts and stores a canonical ISO string.
-- `isSucceeded: false` is surfaced as a generic invalid-credentials failure. Raw server `message` text is not shown to the user.
-- HTTP 401 from Login is treated as invalid credentials; 403 as forbidden; 5xx as a server failure; network/abort failures as network/timeout.
+`POST /api/Store/UploadIcon` is blocked. Swagger documents the `File` multipart
+field but gives no response schema, file type limit, or file size limit. A
+shared multipart helper exists at `src/lib/api/upload.ts`; it appends exactly
+`File`, delegates Bearer handling to the centralized client, and treats only a
+confirmed successful HTTP/envelope result as completion. The frontend cannot
+safely obtain or apply an icon URL without inventing a response contract.
 
-**Not documented for Login:** HTTP status codes for each outcome, error-body schemas, CORS allowed origins, token format/claims, clock-skew policy, and whether `timestamp` is a string or number.
+Phase 2 also reviewed `PUT /api/Store/SetActive/{id}` and
+`PUT /api/Store/Update/{id}`. The Store service can build the exact SetActive
+path/body and safely serialize the non-sensitive Update subset for future use,
+but it sends neither operation: no verified Owner-to-Store mapping is
+available, and the inspected source restricts Store Update, UploadIcon, and
+SetActive to `Admin,SuperAdmin`. Deployed Swagger field presence is not treated
+as Owner permission. `POST /api/Store/Create` remains outside the approved
+operations and is not exposed.
 
-## Missing contracts and exact blockers
+## Menu-category contract findings
 
-### Logout — blocked
+The Swagger request schemas are:
 
-The brief names `POST /api/Account/Logout` and requires Bearer authentication, but does not document the request body, whether a body is accepted, the success status, or the response body. The instruction explicitly forbids assuming an empty body. The dashboard therefore clears the local session and redirects to login, but does **not** call the endpoint. Server-side token revocation cannot be claimed.
+- `GET /api/MenuCategory/GetAll`: optional `storeId` UUID and `onlyActive` boolean
+- `POST /api/MenuCategory/Create` and `PUT /api/MenuCategory/Update/{id}`:
+  `storeId`, `nameAr`, `nameEn`, `imageUrl`, `displayOrder`, `isActive`
+- `PUT /api/MenuCategory/SetActive/{id}`: `{ isActive }`
 
-### ForgotPassword / ResetPassword — blocked
+The brief supplies the category item fields `id`, `storeId`, `nameAr`, `nameEn`,
+`imageUrl`, `displayOrder`, `isActive`, and `itemsCount`. Swagger gives no
+response schemas for these operations and no owner-permission annotation.
 
-Both routes are named, but neither has a request schema, response schema, validation rules, token field name, confirmation field name, or delivery behavior. No form or API call was invented. The existing Forgot-password link shows a clear “not available” dialog.
+The request/response parsing and serialization code is covered by mocked tests,
+but no menu-category operation is wired to the UI or allowed to run without an
+`OwnerStoreScope`. That scope can only be made from a documented,
+server-authoritative owner-to-store mapping whose owner ID matches the
+authenticated session. No such endpoint is present in the reviewed Swagger.
+A missing, malformed, or unverified scope fails before `fetch`; a returned
+category for a different store is rejected rather than rendered. The backend
+must independently enforce ownership for every read and write.
 
-### GetUserById / GetProfile — blocked
+`POST /api/MenuCategory/UploadIcon` is blocked for the same missing response
+schema and undocumented file constraints. Its guarded adapter reuses
+`src/lib/api/upload.ts` for a future verified scope, but the UI does not call
+it or fabricate the returned image URL. The adapter preserves the existing
+icon because it returns no response URL and only a confirmed upload result can
+be considered successful.
 
-The paths are named, but no response schema was supplied. The dashboard therefore uses only the identity returned by the documented Login response (`userId`, `userName`, `role`). It does not call either endpoint and does not invent profile fields.
+## Backend source cross-check
 
-### UpdateProfile — blocked
+The public source candidate has additional implementation evidence that is not
+present in the deployed Swagger:
 
-The endpoint path is named, but no editable fields, validation rules, conflict behavior, or response schema were supplied. Settings therefore displays the authenticated identity read-only and does not send an update.
+- `Store.OwnerId` is nullable `Guid?`, foreign-keyed to `AspNetUsers.Id`, with
+  `WithMany()` and no unique owner index. The source schema therefore permits
+  one owner to have multiple stores and permits an unowned store.
+- `Store/Create` is restricted to `Admin,SuperAdmin` in that source, but its
+  handler creates only a Store and does not create an Identity account or set
+  `OwnerId`.
+- `Store/Update` and `Store/UploadIcon` are also restricted to
+  `Admin,SuperAdmin`; `Store/SetActive` has the same restriction. They are not
+  Owner operations in the source implementation.
+- Menu mutation handlers accept the `Owner` role and compare the resource's
+  `OwnerId` with the authenticated `NameIdentifier` claim. This is useful
+  server-side protection, but it does not provide a current-owner Store query.
 
-### Store/GetAll — blocked
+These findings reinforce the frontend block. They do not prove the deployed
+application uses that exact revision until deployment provenance is confirmed.
 
-The query parameter names and the four envelope keys are known, but the exact `data` structure, pagination metadata, auth requirement, and allowed roles are not. The endpoint is also documented only as a listing endpoint; no create/update/delete/activation endpoints were supplied. It cannot support the existing restaurant-management UI. No Store call or management operation was invented.
+## Contract discrepancy requiring backend clarification
 
-### Other dashboard features — not documented
+Swagger's `UserRole` component is a numeric enum `[0, 1, 2]`, while the supplied
+login/profile examples use the string `Owner`. The login/profile implementation
+follows the explicit Owner-only examples and rejects numeric or non-Owner role
+values. The backend should publish the actual serialized role contract before
+role-dependent work expands.
 
-No Order, Customer, Category, Product, Report, or Notification endpoints were supplied. Those screens remain explicitly labelled demo data.
+Swagger also omits response schemas for every endpoint in this phase. The
+brief-provided examples are therefore treated as the minimum shapes for
+profile, main-category, and menu-category parsing; they are not a substitute
+for a generated response schema.
 
-## Authorization
+## Explicitly not exposed in this phase
 
-- Allowed dashboard role: exactly `Owner`.
-- `Admin` is a valid backend role but is **not authorized** for this dashboard; the future Admin Dashboard will handle administrative operations. No Admin session is created or retained.
-- No additional roles or permissions are assumed. The route guard protects every dashboard route independently of navigation visibility.
-- The backend remains the authority. Frontend route protection is not a substitute for server-side authorization on any future data endpoint.
-- The Login role is stored in `sessionStorage` as part of the session. It is client-editable and must never be trusted by the backend for authorization. A stored `Admin`/unsupported role is rejected and cleared before any dashboard route renders.
+- Store creation and platform-wide Store management
+- Store activation/approval changes (the reviewed SetActive operation is
+  unavailable until Owner permission and a verified scope are established)
+- MainCategory creation, editing, activation, or deletion
+- Cuisine administration
+- Account registration, user listing, archiving, or unarchiving
+- Customer Cart, Address, Favorites, Orders, and Reports
+- Menu items and any other endpoint not supplied as a phase contract
 
-## Token and session handling
+Routes for the previous platform-wide/demo management screens were removed from
+the Owner navigation and route table. The remaining overview visuals are still
+labelled preview data; they are not presented as API results.
 
-- Access token storage: `sessionStorage` under `luqma.session`, together with `expiresAt` and non-sensitive identity fields.
-- Rationale: no HttpOnly-cookie authentication contract was supplied. `sessionStorage` is not equivalent to an HttpOnly Secure cookie and is readable by JavaScript/XSS. This is a documented tradeoff, not a claim of equivalent protection.
-- Passwords are never stored.
-- Bearer attachment is centralized in `src/lib/api/client.ts`; components never build Authorization headers.
-- No refresh endpoint or refresh contract was supplied; no refresh flow exists. Expiry clears the local session and requires sign-in again.
-- A 401 on a protected API call triggers local session invalidation and login redirect.
-- A 403 is surfaced as forbidden.
-- Logout clears local state; the server-side logout call is blocked by the missing contract.
+## Live verification and test data
 
-## Discrepancies
-
-No Swagger/OpenAPI document and no Postman collection were supplied, so there is **no source pair to compare**. The absence of a discrepancy register must not be read as agreement between two contracts.
-
-## Live verification
-
-No production endpoint was called. No credentials, test accounts, or authorized live environment were supplied. Automated tests use mocked HTTP responses only. CORS and real API responses remain unverified until an owner-approved test account and environment are available.
+No authorized account was supplied and no authenticated production request was
+made. Automated tests use mocked HTTP responses only. Test UUIDs and tokens are
+synthetic; no real credentials or tokens are committed.

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ThemeContext, type Theme, type ThemeContextValue } from './context';
+import { themeColors, ThemeContext, type Theme, type ThemeContextValue } from './context';
 
 function readInitialTheme(): Theme {
   if (typeof window === 'undefined') {
@@ -40,7 +40,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-      meta.setAttribute('content', theme === 'dark' ? '#171717' : '#F6F1E7');
+      meta.setAttribute('content', themeColors[theme]);
     }
   }, [theme]);
 

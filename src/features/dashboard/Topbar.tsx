@@ -278,9 +278,14 @@ export function Topbar({ onOpenMenu }: TopbarProps) {
                 role="menuitem"
                 onClick={() => {
                   setProfileOpen(false);
-                  signOut();
+                  const logoutResult = signOut();
                   toast(t('auth.signedOut'), 'info');
                   navigate('/login');
+                  void logoutResult.then((remoteSucceeded) => {
+                    if (!remoteSucceeded) {
+                      toast(t('auth.remoteLogoutFailed'), 'error');
+                    }
+                  });
                 }}
               >
                 <LogOut size={15} strokeWidth={1.8} aria-hidden="true" />

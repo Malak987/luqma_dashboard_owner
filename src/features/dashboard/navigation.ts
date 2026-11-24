@@ -1,14 +1,4 @@
-import {
-  BarChart3,
-  ClipboardList,
-  LayoutDashboard,
-  Settings,
-  Store,
-  Tags,
-  Users,
-  UtensilsCrossed,
-  type LucideIcon,
-} from 'lucide-react';
+import { LayoutDashboard, Settings, Tags, type LucideIcon } from 'lucide-react';
 import type { TranslationKey } from '../../i18n/en';
 
 export interface NavItem {
@@ -27,23 +17,11 @@ export interface NavGroup {
 export const navigation: NavGroup[] = [
   {
     titleKey: 'nav.section.main',
-    items: [
-      { to: '/', labelKey: 'nav.overview', icon: LayoutDashboard, end: true },
-      { to: '/orders', labelKey: 'nav.orders', icon: ClipboardList, badge: 8 },
-      { to: '/restaurants', labelKey: 'nav.restaurants', icon: Store },
-      { to: '/customers', labelKey: 'nav.customers', icon: Users },
-    ],
+    items: [{ to: '/', labelKey: 'nav.overview', icon: LayoutDashboard, end: true }],
   },
   {
     titleKey: 'nav.section.catalog',
-    items: [
-      { to: '/categories', labelKey: 'nav.categories', icon: Tags },
-      { to: '/products', labelKey: 'nav.products', icon: UtensilsCrossed },
-    ],
-  },
-  {
-    titleKey: 'nav.section.insights',
-    items: [{ to: '/reports', labelKey: 'nav.reports', icon: BarChart3 }],
+    items: [{ to: '/categories', labelKey: 'nav.categories', icon: Tags }],
   },
   {
     titleKey: 'nav.section.account',

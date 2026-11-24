@@ -120,13 +120,23 @@ describe('UpdateProfile', () => {
     expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/json');
   });
 
+  it('validates profile fields before touching the network', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+    configureApiAuth({ getToken: () => 'owner-token' });
+
+    await expect(
+      updateProfile({ userName: '', email: 'bad', phoneNumber: '', address: '' }),
+    ).rejects.toMatchObject({ kind: 'invalid-request' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('surfaces server validation failures without exposing raw text', async () => {
     vi.stubGlobal('fetch', fetchMock);
     configureApiAuth({ getToken: () => 'owner-token' });
     fetchMock.mockResolvedValue(response('Validation failed', 400));
 
     await expect(
-      updateProfile({ userName: '', email: 'bad', phoneNumber: '', address: '' }),
+      updateProfile({ userName: 'Owner', email: 'owner@example.com', phoneNumber: '', address: '' }),
     ).rejects.toBeInstanceOf(ApiError);
   });
 

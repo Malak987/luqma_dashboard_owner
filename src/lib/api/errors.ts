@@ -6,6 +6,8 @@ export type ApiErrorKind =
   | 'forbidden'
   | 'invalid-response'
   | 'business'
+  | 'invalid-request'
+  | 'ownership-unverified'
   | 'unknown';
 
 /**

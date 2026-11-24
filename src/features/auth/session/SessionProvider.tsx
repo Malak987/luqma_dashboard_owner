@@ -20,6 +20,10 @@ export function SessionProvider({ children }: SessionProviderProps) {
   const clearAuthError = useCallback(() => setAuthError(null), []);
 
   const invalidateSession = useCallback((reason: AuthFailureReason) => {
+    // Remove the token provider immediately, not only after React rerenders.
+    // This prevents a protected request from retaining the old token in a
+    // closure while local state is being invalidated.
+    resetApiAuth();
     clearStoredSession();
     setSession(null);
     setAuthError(reason);
@@ -38,11 +42,12 @@ export function SessionProvider({ children }: SessionProviderProps) {
    * call can never leave the user locally authenticated. The captured token is
    * passed explicitly because the session is already gone when the request runs.
    */
-  const signOut = useCallback(() => {
+  const signOut = useCallback((): Promise<boolean> => {
     const token = session?.token ?? null;
 
-    void performLogout({
+    return performLogout({
       clearLocal: () => {
+        resetApiAuth();
         clearStoredSession();
         setSession(null);
         setAuthError(null);

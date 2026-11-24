@@ -6,6 +6,7 @@ import {
   formatRelativeMinutes,
 } from '../lib/format';
 import { directionFor } from '../i18n/locale';
+import { themeColors } from '../theme/context';
 
 describe('locale formatting', () => {
   it('formats Egyptian pounds for English and Arabic', () => {
@@ -43,5 +44,9 @@ describe('locale formatting', () => {
   it('maps locale to direction', () => {
     expect(directionFor('en')).toBe('ltr');
     expect(directionFor('ar')).toBe('rtl');
+  });
+
+  it('keeps the light and dark theme metadata palette explicit', () => {
+    expect(themeColors).toEqual({ light: '#F6F1E7', dark: '#171717' });
   });
 });

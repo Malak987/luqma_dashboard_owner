@@ -22,7 +22,9 @@ function mapMainCategory(value: unknown): OwnerMainCategory {
     item.id.trim() === '' ||
     typeof item.nameAr !== 'string' ||
     typeof item.nameEn !== 'string' ||
+    (item.iconUrl !== null && typeof item.iconUrl !== 'string') ||
     typeof item.displayOrder !== 'number' ||
+    !Number.isInteger(item.displayOrder) ||
     typeof item.isActive !== 'boolean'
   ) {
     throw new ApiError('invalid-response', 'MainCategory item is missing required fields.');
@@ -32,7 +34,7 @@ function mapMainCategory(value: unknown): OwnerMainCategory {
     id: item.id,
     nameAr: item.nameAr,
     nameEn: item.nameEn,
-    iconUrl: typeof item.iconUrl === 'string' ? item.iconUrl : '',
+    iconUrl: item.iconUrl ?? '',
     displayOrder: item.displayOrder,
     isActive: item.isActive,
   };

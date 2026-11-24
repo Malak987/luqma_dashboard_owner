@@ -22,8 +22,30 @@ export async function getProfile(signal?: AbortSignal): Promise<OwnerProfile> {
   return mapOwnerProfile(response.data);
 }
 
+function assertUpdateProfileRequest(
+  value: unknown,
+): asserts value is UpdateProfileRequest {
+  if (!value || typeof value !== 'object') {
+    throw new ApiError('invalid-request', 'Profile fields are invalid.');
+  }
+
+  const request = value as Record<string, unknown>;
+  const email = typeof request.email === 'string' ? request.email.trim() : '';
+  if (
+    typeof request.userName !== 'string' ||
+    request.userName.trim() === '' ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+    typeof request.phoneNumber !== 'string' ||
+    typeof request.address !== 'string'
+  ) {
+    throw new ApiError('invalid-request', 'Profile fields are invalid.');
+  }
+}
+
 /** PUT /api/Account/UpdateProfile — exact documented request fields. */
 export async function updateProfile(request: UpdateProfileRequest): Promise<void> {
+  assertUpdateProfileRequest(request);
+
   const response = await apiRequest<unknown>('/api/Account/UpdateProfile', {
     method: 'PUT',
     body: {

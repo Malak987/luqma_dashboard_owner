@@ -7,12 +7,7 @@ import { DashboardLayout } from './features/dashboard/DashboardLayout';
 import { NotFoundPage } from './features/not-found/NotFoundPage';
 
 const OverviewPage = lazy(() => import('./features/overview/OverviewPage'));
-const OrdersPage = lazy(() => import('./features/orders/OrdersPage'));
-const RestaurantsPage = lazy(() => import('./features/restaurants/RestaurantsPage'));
-const CustomersPage = lazy(() => import('./features/customers/CustomersPage'));
 const CategoriesPage = lazy(() => import('./features/categories/CategoriesPage'));
-const ProductsPage = lazy(() => import('./features/products/ProductsPage'));
-const ReportsPage = lazy(() => import('./features/reports/ReportsPage'));
 const SettingsPage = lazy(() => import('./features/settings/SettingsPage'));
 
 export default function App() {
@@ -28,12 +23,7 @@ export default function App() {
           }
         >
           <Route index element={<OverviewPage />} />
-          <Route path="orders" element={<OrdersPage />} />
-          <Route path="restaurants" element={<RestaurantsPage />} />
-          <Route path="customers" element={<CustomersPage />} />
           <Route path="categories" element={<CategoriesPage />} />
-          <Route path="products" element={<ProductsPage />} />
-          <Route path="reports" element={<ReportsPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Route>
