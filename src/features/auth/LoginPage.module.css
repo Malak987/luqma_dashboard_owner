@@ -1,0 +1,588 @@
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1.04fr) minmax(430px, 0.96fr);
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+.brandPanel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 26px;
+  padding: clamp(28px, 4vw, 52px);
+  overflow: hidden;
+  border-inline-end: 1px solid var(--border);
+  background:
+    radial-gradient(680px 520px at 8% -8%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 64%),
+    radial-gradient(560px 460px at 96% 108%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 62%),
+    var(--bg-subtle);
+}
+
+html[data-theme='dark'] .brandPanel {
+  background:
+    radial-gradient(680px 520px at 8% -8%, color-mix(in srgb, var(--primary) 34%, transparent), transparent 64%),
+    radial-gradient(560px 460px at 96% 108%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 62%),
+    #151213;
+  border-inline-end-color: #2b2320;
+}
+
+.brandGlow {
+  position: absolute;
+  inset-block-start: -120px;
+  inset-inline-start: -80px;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  filter: blur(90px);
+  pointer-events: none;
+}
+
+.brandGrid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--primary) 14%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 24px 24px;
+  mask-image: linear-gradient(180deg, rgb(0 0 0 / 0.44), transparent 62%);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+html[data-theme='dark'] .brandGrid {
+  background-image: radial-gradient(circle, rgb(200 159 106 / 0.2) 1px, transparent 1px);
+  opacity: 0.28;
+}
+
+.brandTop {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 560px;
+}
+
+.brandLogo {
+  width: min(100%, 430px);
+  margin-block-end: 4px;
+}
+
+.brandEyebrow {
+  margin-block-end: 8px;
+  color: var(--accent-strong);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+html[lang='ar'] .brandEyebrow {
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 11.5px;
+}
+
+.brandTitle {
+  max-width: 520px;
+  color: var(--heading);
+  font-size: clamp(30px, 3.2vw, 40px);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.12;
+}
+
+html[lang='ar'] .brandTitle {
+  letter-spacing: 0;
+  line-height: 1.35;
+}
+
+.brandSubtitle {
+  max-width: 470px;
+  margin-block-start: 12px;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-block-start: 24px;
+}
+
+.feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.featureIcon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: var(--shadow-xs);
+}
+
+html[data-theme='dark'] .featureIcon {
+  background: rgb(255 255 255 / 0.03);
+  color: var(--accent);
+  border-color: #332b28;
+}
+
+.featureTitle {
+  display: block;
+  color: var(--heading);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.featureBody {
+  display: block;
+  margin-block-start: 2px;
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.miniCardWrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 390px;
+}
+
+.miniCard {
+  padding: 17px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.miniCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.miniCardLabel {
+  color: var(--heading);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.miniCardLive {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-block-start: 2px;
+  color: var(--muted);
+  font-size: 9.5px;
+}
+
+.miniCardLive span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 3px var(--success-soft);
+}
+
+.miniCardBadge {
+  padding: 3px 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  color: var(--inactive);
+  font-size: 8.5px;
+  font-weight: 700;
+}
+
+.miniCardStats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 108px;
+  align-items: end;
+  gap: 12px;
+  margin-block-start: 15px;
+}
+
+.miniCardStatLabel {
+  display: block;
+  color: var(--inactive);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+html[lang='ar'] .miniCardStatLabel {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.miniCardStatValue {
+  display: block;
+  margin-block-start: 2px;
+  color: var(--heading);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+html[lang='ar'] .miniCardStatValue {
+  letter-spacing: 0;
+}
+
+.miniCardDelta {
+  display: block;
+  margin-block-start: 1px;
+  color: var(--success);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.miniCardStats svg {
+  color: var(--accent-strong);
+}
+
+.miniCardFooter {
+  margin-block-start: 12px;
+  padding-block-start: 9px;
+  border-block-start: 1px solid var(--divider);
+  color: var(--inactive);
+  font-size: 8.5px;
+}
+
+.brandFooter {
+  position: relative;
+  z-index: 1;
+  color: var(--inactive);
+  font-size: 10px;
+}
+
+.formPanel {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  overflow-y: auto;
+  background: var(--surface);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 26px clamp(20px, 3vw, 40px) 0;
+}
+
+.formWrap {
+  width: 100%;
+  max-width: 438px;
+  margin-block: auto;
+  margin-inline: auto;
+  padding: 22px clamp(20px, 3vw, 40px) 20px;
+}
+
+.mobileBrand {
+  display: none;
+  width: 142px;
+  margin-block-end: 26px;
+}
+
+.eyebrow {
+  color: var(--accent-strong);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+html[lang='ar'] .eyebrow {
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 11.5px;
+}
+
+.title {
+  margin-block-start: 6px;
+  color: var(--heading);
+  font-size: clamp(27px, 2.8vw, 33px);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.17;
+}
+
+html[lang='ar'] .title {
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+
+.subtitle {
+  margin-block-start: 8px;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-block-start: 24px;
+}
+
+.options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.accessHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.accessHint svg {
+  flex: 0 0 auto;
+  color: var(--success);
+}
+
+.formError {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-block-start: 16px;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--danger) 28%, var(--border));
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.formError svg {
+  flex: 0 0 auto;
+  margin-block-start: 1px;
+}
+
+.formError p {
+  color: var(--danger);
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.forgot {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--link);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.forgot:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.eyeButton {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--inactive);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.eyeButton:hover {
+  background: var(--surface-muted);
+  color: var(--body);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-block: 18px;
+  color: var(--inactive);
+  font-size: 9.5px;
+  font-weight: 600;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--divider);
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-block-start: 20px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+}
+
+.noticeIcon {
+  flex: 0 0 auto;
+  margin-block-start: 1px;
+  color: var(--success);
+}
+
+.noticeTitle {
+  color: var(--heading);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.noticeBody {
+  margin-block-start: 2px;
+  color: var(--muted);
+  font-size: 9.5px;
+  line-height: 1.5;
+}
+
+.secureNote {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-block-start: 13px;
+  color: var(--inactive);
+  font-size: 9px;
+  text-align: center;
+}
+
+.formFooter {
+  padding: 0 clamp(20px, 3vw, 40px) 20px;
+  color: var(--inactive);
+  font-size: 9px;
+  text-align: center;
+}
+
+.dialogBody {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+@media (max-width: 1100px) {
+  .page {
+    grid-template-columns: minmax(0, 1fr) minmax(400px, 1fr);
+  }
+
+  .brandPanel {
+    padding: 34px;
+  }
+
+  .brandTitle {
+    font-size: 31px;
+  }
+
+  .miniCardStats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .miniCardStats svg {
+    display: none;
+  }
+}
+
+@media (max-height: 860px) and (min-width: 900px) {
+  .miniCardWrap {
+    display: none;
+  }
+
+  .brandTitle {
+    font-size: 32px;
+  }
+
+  .features {
+    margin-block-start: 18px;
+  }
+}
+
+@media (max-width: 900px) {
+  .page {
+    display: block;
+    min-height: 100dvh;
+    background:
+      radial-gradient(620px 400px at 90% -8%, rgb(200 159 106 / 0.14), transparent 65%),
+      var(--surface);
+  }
+
+  .brandPanel {
+    display: none;
+  }
+
+  .formPanel {
+    min-height: 100dvh;
+    background: transparent;
+  }
+
+  .controls {
+    padding: 16px 18px 0;
+  }
+
+  .formWrap {
+    max-width: 460px;
+    padding: 24px 20px 18px;
+  }
+
+  .mobileBrand {
+    display: block;
+  }
+
+  .formFooter {
+    padding: 0 20px 18px;
+  }
+}
+
+@media (max-width: 420px) {
+  .title {
+    font-size: 25px;
+  }
+
+  .formWrap {
+    padding-inline: 17px;
+  }
+
+  .options {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}

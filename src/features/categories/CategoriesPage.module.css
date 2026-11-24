@@ -1,0 +1,144 @@
+.performance {
+  margin-block-end: 14px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.card:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.iconTile {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+html[data-theme='dark'] .iconTile {
+  color: #e7b7bd;
+}
+
+.iconTile[data-tone='1'] {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.iconTile[data-tone='2'] {
+  background: var(--info-soft);
+  color: var(--info);
+}
+
+.iconTile[data-tone='3'] {
+  background: var(--neutral-soft);
+  color: var(--status-on-the-way);
+}
+
+.name {
+  margin-block-start: 13px;
+  overflow: hidden;
+  color: var(--heading);
+  font-size: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.items {
+  margin-block-start: 2px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.shareRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-block-start: 14px;
+}
+
+.shareLabel {
+  color: var(--inactive);
+  font-size: 8.5px;
+}
+
+.shareValue {
+  color: var(--heading);
+  font-size: 10.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.track {
+  height: 4px;
+  margin-block-start: 6px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-block-start: 12px;
+  padding-block-start: 10px;
+  border-block-start: 1px solid var(--divider);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+@media (max-width: 1180px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

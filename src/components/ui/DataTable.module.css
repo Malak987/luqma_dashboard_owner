@@ -1,0 +1,86 @@
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  min-width: 640px;
+  font-size: 12.5px;
+}
+
+.table th {
+  padding: 9px 14px;
+  border-block-end: 1px solid var(--divider);
+  color: var(--inactive);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: start;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+html[lang='ar'] .table th {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.table td {
+  padding: 13px 14px;
+  border-block-end: 1px solid var(--divider);
+  color: var(--body);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-block-end: 0;
+}
+
+.table tbody tr {
+  transition: background var(--transition-fast);
+}
+
+.table tbody tr:hover {
+  background: var(--surface-muted);
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.align_end {
+  text-align: end !important;
+}
+
+.align_center {
+  text-align: center !important;
+}
+
+.align_start {
+  text-align: start !important;
+}
+
+.mobileList {
+  display: none;
+}
+
+.mobileCard {
+  padding: 16px;
+  border-block-end: 1px solid var(--divider);
+}
+
+.mobileCard:last-child {
+  border-block-end: 0;
+}
+
+@media (max-width: 760px) {
+  .tableWrap {
+    display: none;
+  }
+
+  .mobileList {
+    display: block;
+  }
+}

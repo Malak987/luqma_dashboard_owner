@@ -1,0 +1,34 @@
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.gridLine {
+  stroke: var(--chart-grid);
+  stroke-width: 1;
+  stroke-dasharray: 2 5;
+}
+
+.axisLabel {
+  fill: var(--chart-label);
+  font-family: var(--font-latin);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.bar {
+  fill: var(--primary-soft-strong);
+  transition: fill var(--transition-fast);
+}
+
+.barActive {
+  fill: var(--primary);
+}
+
+@media (max-width: 560px) {
+  .axisLabel {
+    font-size: 9px;
+  }
+}

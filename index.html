@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" dir="ltr" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Luqma Dashboard — a polished frontend visual preview. Local demo data only." />
+    <meta name="theme-color" content="#F6F1E7" />
+    <title>Luqma Dashboard</title>
+    <script>
+      (function () {
+        try {
+          var params = new URLSearchParams(window.location.search);
+          var theme = params.get('theme');
+          if (theme !== 'light' && theme !== 'dark') {
+            theme = window.localStorage.getItem('luqma.theme');
+          }
+          if (theme !== 'light' && theme !== 'dark') {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+
+          var lang = params.get('lang');
+          if (lang !== 'ar' && lang !== 'en') {
+            lang = window.localStorage.getItem('luqma.lang');
+          }
+          if (lang !== 'ar' && lang !== 'en') {
+            lang = 'en';
+          }
+
+          document.documentElement.dataset.theme = theme;
+          document.documentElement.lang = lang;
+          document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) {
+            meta.setAttribute('content', theme === 'dark' ? '#171717' : '#F6F1E7');
+          }
+        } catch (error) {
+          /* The app still boots with the default light theme. */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

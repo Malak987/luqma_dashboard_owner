@@ -1,0 +1,8 @@
+.logo {
+  display: block;
+  width: 142px;
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}

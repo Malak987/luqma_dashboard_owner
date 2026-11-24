@@ -1,0 +1,44 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 32px 20px;
+  text-align: center;
+  background:
+    radial-gradient(700px 480px at 50% -10%, rgb(200 159 106 / 0.16), transparent 65%),
+    var(--bg);
+}
+
+.logo {
+  width: 132px;
+  margin-block-end: 28px;
+}
+
+.code {
+  color: var(--accent-strong);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+}
+
+.title {
+  margin-block-start: 6px;
+  color: var(--heading);
+  font-size: clamp(26px, 4vw, 36px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+html[lang='ar'] .title {
+  letter-spacing: 0;
+}
+
+.body {
+  max-width: 420px;
+  margin-block: 9px 20px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}

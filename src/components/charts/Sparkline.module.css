@@ -1,0 +1,25 @@
+.sparkline {
+  width: 100%;
+  height: 38px;
+  overflow: visible;
+}
+
+.primary {
+  color: var(--primary);
+}
+
+.success {
+  color: var(--success);
+}
+
+.accent {
+  color: var(--accent-strong);
+}
+
+.danger {
+  color: var(--danger);
+}
+
+.info {
+  color: var(--info);
+}

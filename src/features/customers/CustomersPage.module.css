@@ -1,0 +1,135 @@
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-block-end: 14px;
+}
+
+.search {
+  flex: 1;
+  min-width: 200px;
+}
+
+.tableCard {
+  overflow: hidden;
+}
+
+.customerCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.customerCopy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.customerName {
+  overflow: hidden;
+  color: var(--heading);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customerEmail {
+  overflow: hidden;
+  color: var(--inactive);
+  font-size: 9.5px;
+  direction: ltr;
+  text-overflow: ellipsis;
+  unicode-bidi: isolate;
+  white-space: nowrap;
+}
+
+.phone {
+  color: var(--muted);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.orders {
+  color: var(--body);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.spend {
+  color: var(--heading);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.lastOrder {
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.mobileCustomer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mobileTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 9px;
+}
+
+.mobileStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 9px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+}
+
+.mobileStats > span {
+  display: flex;
+  flex-direction: column;
+  color: var(--heading);
+  font-size: 10.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.mobileLabel {
+  color: var(--inactive);
+  font-size: 8px;
+  font-weight: 600;
+}
+
+.mobileFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .filters {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .mobileStats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mobileStats > span:last-child {
+    grid-column: 1 / -1;
+  }
+}
