@@ -7,7 +7,8 @@ export interface SessionContextValue {
   authReady: boolean;
   authError: AuthFailureReason | null;
   signIn: (email: string, password: string) => Promise<Session>;
-  signOut: () => void;
+  /** Clears local state synchronously and resolves when remote logout finishes. */
+  signOut: () => Promise<boolean>;
   invalidateSession: (reason: AuthFailureReason) => void;
   clearAuthError: () => void;
 }

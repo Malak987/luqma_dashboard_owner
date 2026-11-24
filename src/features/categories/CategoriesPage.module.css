@@ -1,3 +1,19 @@
+.blockedState {
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--warning) 28%, var(--border));
+  border-radius: var(--radius-lg);
+  background: var(--warning-soft);
+}
+
+.contractNote {
+  max-width: 640px;
+  margin: -4px auto 8px;
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.6;
+  text-align: center;
+}
+
 .performance {
   margin-block-end: 14px;
 }

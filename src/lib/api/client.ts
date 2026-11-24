@@ -28,6 +28,7 @@ export function resetApiAuth(): void {
 
 export interface ApiRequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  /** JSON values are encoded centrally; FormData is sent as multipart without a manual content type. */
   body?: unknown;
   /** Defaults to true. Set to false only for documented anonymous endpoints. */
   auth?: boolean;
@@ -42,6 +43,10 @@ export interface ApiRequestOptions {
 
 function buildUrl(path: string): string {
   return `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+}
+
+function isFormDataBody(value: unknown): value is FormData {
+  return typeof FormData !== 'undefined' && value instanceof FormData;
 }
 
 /**
@@ -68,9 +73,12 @@ export async function apiRequest<T>(
     ...extraHeaders,
   };
 
-  if (body !== undefined) {
+  if (body !== undefined && !isFormDataBody(body)) {
     headers['Content-Type'] = 'application/json';
   }
+
+  const requestBody =
+    body === undefined ? undefined : isFormDataBody(body) ? body : JSON.stringify(body);
 
   if (auth) {
     const token = accessToken ?? getToken();
@@ -97,7 +105,7 @@ export async function apiRequest<T>(
       response = await fetch(buildUrl(path), {
         method,
         headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
+        body: requestBody,
         signal: controller.signal,
       });
     } catch (error) {

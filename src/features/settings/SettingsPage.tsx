@@ -8,6 +8,7 @@ import { Badge, Switch } from '../../components/ui/Primitives';
 import { Button } from '../../components/ui/Button';
 import { PageHeader, SectionCard } from '../../components/ui/Panel';
 import { ProfileSettingsCard } from '../profile/ui/ProfileSettingsCard';
+import { RestaurantSettingsCard } from '../store/ui/RestaurantSettingsCard';
 import styles from './SettingsPage.module.css';
 
 export default function SettingsPage() {
@@ -39,6 +40,7 @@ export default function SettingsPage() {
       <div className={styles.grid}>
         <div className={styles.column}>
           <ProfileSettingsCard />
+          <RestaurantSettingsCard />
 
           <SectionCard
             title={t('settings.notificationsTitle')}

@@ -35,21 +35,27 @@ export function mapOwnerProfile(data: unknown): OwnerProfile {
     typeof candidate.name !== 'string' ||
     candidate.name.trim() === '' ||
     typeof candidate.email !== 'string' ||
-    candidate.email.trim() === ''
+    candidate.email.trim() === '' ||
+    (candidate.phoneNumber !== null && typeof candidate.phoneNumber !== 'string') ||
+    (candidate.address !== null && typeof candidate.address !== 'string') ||
+    typeof candidate.emailConfirmed !== 'boolean' ||
+    typeof candidate.isArchived !== 'boolean' ||
+    typeof candidate.createAt !== 'string' ||
+    typeof candidate.updateAt !== 'string'
   ) {
-    throw new ApiError('invalid-response', 'GetProfile is missing required identity fields.');
+    throw new ApiError('invalid-response', 'GetProfile is missing required profile fields.');
   }
 
   return {
     id: candidate.id,
     name: candidate.name,
     email: candidate.email,
-    phoneNumber: typeof candidate.phoneNumber === 'string' ? candidate.phoneNumber : '',
-    address: typeof candidate.address === 'string' ? candidate.address : '',
+    phoneNumber: candidate.phoneNumber ?? '',
+    address: candidate.address ?? '',
     role: 'Owner',
-    emailConfirmed: candidate.emailConfirmed === true,
-    isArchived: candidate.isArchived === true,
-    createAt: typeof candidate.createAt === 'string' ? candidate.createAt : '',
-    updateAt: typeof candidate.updateAt === 'string' ? candidate.updateAt : '',
+    emailConfirmed: candidate.emailConfirmed,
+    isArchived: candidate.isArchived,
+    createAt: candidate.createAt,
+    updateAt: candidate.updateAt,
   };
 }

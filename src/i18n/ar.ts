@@ -7,8 +7,9 @@ export const ar: Dictionary = {
 
   'role.Owner': 'مالك',
   'auth.signedOut': 'تم تسجيل الخروج على هذا الجهاز.',
+  'auth.remoteLogoutFailed': 'تم تسجيل الخروج من الجهاز، لكن تعذّر على لقمة تأكيد الخروج من الخادم.',
   'integration.demoNotice':
-    'الملف الشخصي متصل. بيانات اللوحة وإدارة المطاعم ما زالت تجريبية — ربط المالك بالمطعم وبقية العقود لم تُسلّم.',
+    'حساب المالك متصل. تظل إدارة المطعم مقفلة حتى يوفّر خادم لقمة ربطًا موثوقًا بين المالك والمطعم وعقود الاستجابة الكاملة.',
 
   'common.all': 'الكل',
   'common.back': 'رجوع',
@@ -73,7 +74,7 @@ export const ar: Dictionary = {
   'nav.help': 'مركز المساعدة',
   'nav.newOrders': '{count} طلبات جديدة',
   'nav.previewMode': 'وضع البيانات التجريبية',
-  'nav.previewDescription': 'تم تسجيل الدخول عبر خادم لقمة. بيانات اللوحة تجريبية.',
+  'nav.previewDescription': 'وصول المالك متصل. تبقى واجهات الإدارة غير المدعومة مخفية.',
   'nav.backToLogin': 'العودة لتسجيل الدخول',
   'nav.ownerName': 'مريم عادل',
   'nav.ownerRole': 'مالك',
@@ -90,7 +91,7 @@ export const ar: Dictionary = {
   'topbar.language': 'اللغة',
   'topbar.signOut': 'تسجيل الخروج',
   'topbar.previewChip': 'بيانات تجريبية',
-  'topbar.previewTitle': 'تم تسجيل الدخول. بيانات اللوحة تجريبية — واجهات الإدارة غير متصلة.',
+  'topbar.previewTitle': 'جلسة المالك متصلة. واجهات الإدارة غير المدعومة غير معروضة.',
   'topbar.breadcrumbDashboard': 'لوحة التحكم',
   'topbar.menu': 'القائمة',
   'topbar.signedInAs': 'مسجّل الدخول باسم',
@@ -110,9 +111,9 @@ export const ar: Dictionary = {
   'login.submit': 'تسجيل الدخول',
   'login.submitting': 'جارٍ تسجيل الدخول…',
   'login.or': 'أو',
-  'login.exploreDemo': 'استكشف لوحة العرض التجريبية',
-  'login.previewNoticeTitle': 'هذه معاينة بصرية',
-  'login.previewNotice': 'لا يتم إرسال بيانات الاعتماد أو تخزينها. تسجيل الدخول يفتح مساحة العرض المحلية.',
+  'login.exploreDemo': 'استخدم بيانات اعتماد المالك',
+  'login.previewNoticeTitle': 'دخول المالك',
+  'login.previewNotice': 'استخدم بيانات الاعتماد التي سلّمك إياها مسؤول لقمة. لا تحتفظ اللوحة بكلمة المرور.',
   'login.brandEyebrow': 'مساحة عمل لقمة',
   'login.brandTitle': 'كل تفاصيل مطعمك، في مكان واحد أنيق.',
   'login.brandSubtitle': 'الطلبات والقوائم والعملاء والتحليلات — مجتمعة بدفء لقمة.',
@@ -303,7 +304,12 @@ export const ar: Dictionary = {
 
   'categories.eyebrow': 'القائمة',
   'categories.title': 'الفئات',
-  'categories.subtitle': 'نظّم القائمة حول طريقة طلب الناس.',
+  'categories.subtitle': 'أدر فئات قائمة مطعمك فقط.',
+  'categories.ownerOnlyTitle': 'فئات المطعم مقفلة حاليًا',
+  'categories.ownerOnlyBody':
+    'لم يوفّر خادم لقمة ربطًا موثوقًا بين المالك والمطعم. لن نعرض بيانات الفئات ولن نرسل أي تغيير غير آمن.',
+  'categories.ownerOnlyContract':
+    'الفئات الرئيسية للقراءة فقط. ستظهر إدارة الفئات بعد توثيق ربط المالك بالمطعم وفحوصات الملكية من الخادم.',
   'categories.newCategory': 'فئة جديدة',
   'categories.newToast': 'إضافة الفئات غير متصلة بعد.',
   'categories.itemsCount': '{count} عنصر',
@@ -419,8 +425,21 @@ export const ar: Dictionary = {
   'settings.sessions': 'الجلسات النشطة',
   'settings.sessionsDesc': 'إدارة الجلسات غير متصلة.',
   'settings.previewNote':
-    'ملفك الشخصي متصل بخادم لقمة. تُخزّن تفضيلات المظهر والإشعارات محليًا؛ وواجهات إدارة المطعم غير متصلة.',
+    'ملفك الشخصي متصل بخادم لقمة. تُخزّن تفضيلات المظهر والإشعارات محليًا، ولا نعرض عمليات المطعم إلا بعد تحقق الخادم من مطعمك.',
   'settings.previewBadge': 'تم تسجيل الدخول',
+  'settings.restaurantTitle': 'إعدادات المطعم',
+  'settings.restaurantSubtitle': 'أدر المطعم الذي تم التحقق من ربطه بحساب المالك فقط.',
+  'settings.restaurantUnavailable': 'غير متاحة',
+  'settings.restaurantBlockedTitle': 'إدارة المطعم مقفلة حاليًا',
+  'settings.restaurantBlockedBody':
+    'لن تخمّن اللوحة معرّف مطعم ولن تستخدم قائمة المطاعم العامة كدليل على الملكية.',
+  'settings.restaurantScopeLabel': 'نطاق المالك والمطعم',
+  'settings.restaurantScopeMissing': 'لا يعيد GetProfile ربطًا موثوقًا بمطعم.',
+  'settings.restaurantPermissionLabel': 'صلاحيات المطعم',
+  'settings.restaurantPermissionMissing':
+    'لا توثّق Store Update ورفع الأيقونة كعمليات مسموحة للمالك، وتظل حالة التفعيل غير متاحة.',
+  'settings.restaurantContractNote':
+    'لن نعرض بيانات المطعم أو معرّفات الملكية أو كلمات المرور أو أدوات التفعيل حتى يوفّر الخادم ربطًا موثوقًا وعقد صلاحيات واضحًا.',
   'settings.userId': 'معرّف المستخدم',
   'settings.address': 'العنوان',
   'profile.loading': 'جارٍ تحميل ملفك الشخصي…',
@@ -439,7 +458,7 @@ export const ar: Dictionary = {
   'profile.refreshError': 'تم حفظ الملف الشخصي، لكن تعذّر تحديث بياناته. أعد تحميل الصفحة لرؤية أحدث القيم.',
   'settings.profileNotConnected': 'تعديل الملف الشخصي غير متاح لأن عقد UpdateProfile لم يُسلّم.',
 
-  'footer.preview': 'بيانات تجريبية · واجهة الإدارة غير متصلة',
+  'footer.preview': 'مساحة المالك · واجهات الإدارة غير المدعومة مخفية',
   'footer.rights': '© 2026 لقمة. جميع الحقوق محفوظة.',
   'footer.help': 'المساعدة والدعم',
   'footer.helpToast': 'مركز المساعدة غير متصل بعد.',

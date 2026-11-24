@@ -1,0 +1,96 @@
+.card {
+  min-width: 0;
+}
+
+.scopeState {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, var(--border));
+  border-radius: var(--radius-md);
+  background: var(--warning-soft);
+}
+
+.scopeIcon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--warning) 14%, var(--surface));
+  color: var(--warning);
+}
+
+.scopeCopy {
+  min-width: 0;
+}
+
+.scopeTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--heading);
+}
+
+.scopeTitle {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.scopeBody {
+  margin-block-start: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.scopeList {
+  display: flex;
+  flex-direction: column;
+  margin-block-start: 14px;
+  border-block: 1px solid var(--divider);
+}
+
+.scopeRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding-block: 10px;
+}
+
+.scopeRow + .scopeRow {
+  border-block-start: 1px solid var(--divider);
+}
+
+.scopeRowIcon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 27px;
+  height: 27px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-muted);
+  color: var(--muted);
+}
+
+.scopeLabel {
+  color: var(--body);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.scopeValue {
+  margin-block-start: 2px;
+  color: var(--muted);
+  font-size: 9.5px;
+  line-height: 1.45;
+}
+
+.contractNote {
+  margin-block-start: 12px;
+  color: var(--inactive);
+  font-size: 9.5px;
+  line-height: 1.5;
+}

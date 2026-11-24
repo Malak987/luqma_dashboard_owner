@@ -5,8 +5,10 @@ export const en = {
 
   'role.Owner': 'Owner',
   'auth.signedOut': 'Signed out on this device.',
+  'auth.remoteLogoutFailed':
+    'You were signed out on this device, but Luqma could not confirm remote sign-out.',
   'integration.demoNotice':
-    'Account profile is connected. Dashboard metrics and restaurant management data are still demo — the owner-store mapping and remaining API contracts were not supplied.',
+    'Your Owner account is connected. Restaurant management stays locked until Luqma supplies a verified owner-to-store mapping and complete response contracts.',
 
   'common.all': 'All',
   'common.back': 'Back',
@@ -71,7 +73,7 @@ export const en = {
   'nav.help': 'Help center',
   'nav.newOrders': '{count} new orders',
   'nav.previewMode': 'Demo data mode',
-  'nav.previewDescription': 'Signed in via the Luqma API. Dashboard data is still demo.',
+  'nav.previewDescription': 'Owner access is connected. Unsupported management areas stay hidden.',
   'nav.backToLogin': 'Back to sign in',
   'nav.ownerName': 'Mariam Adel',
   'nav.ownerRole': 'Owner',
@@ -88,7 +90,7 @@ export const en = {
   'topbar.language': 'Language',
   'topbar.signOut': 'Sign out',
   'topbar.previewChip': 'Demo data',
-  'topbar.previewTitle': 'Signed in. Dashboard data is demo data — management APIs are not connected.',
+  'topbar.previewTitle': 'Owner session is connected. Unsupported management APIs are not exposed.',
   'topbar.breadcrumbDashboard': 'Dashboard',
   'topbar.menu': 'Menu',
   'topbar.signedInAs': 'Signed in as',
@@ -108,10 +110,10 @@ export const en = {
   'login.submit': 'Sign in',
   'login.submitting': 'Signing in…',
   'login.or': 'or',
-  'login.exploreDemo': 'Explore the demo dashboard',
-  'login.previewNoticeTitle': 'This is a visual preview',
+  'login.exploreDemo': 'Use your Owner credentials',
+  'login.previewNoticeTitle': 'Owner access',
   'login.previewNotice':
-    'No credentials are sent or stored. Signing in opens the local demo workspace.',
+    'Use the credentials provided by your Luqma administrator. The dashboard does not persist your password.',
   'login.brandEyebrow': 'The Luqma workspace',
   'login.brandTitle': 'Every detail of your restaurant, in one beautiful place.',
   'login.brandSubtitle':
@@ -306,7 +308,12 @@ export const en = {
 
   'categories.eyebrow': 'Catalog',
   'categories.title': 'Categories',
-  'categories.subtitle': 'Keep the menu organized around the way people order.',
+  'categories.subtitle': 'Manage menu categories belonging to your restaurant only.',
+  'categories.ownerOnlyTitle': 'Restaurant categories are locked for now',
+  'categories.ownerOnlyBody':
+    'Luqma has not supplied a verified owner-to-restaurant mapping. No category data is shown and no category change can be submitted safely.',
+  'categories.ownerOnlyContract':
+    'Main categories are read-only. Category management will appear after the backend documents the owner-to-store mapping and ownership checks.',
   'categories.newCategory': 'New category',
   'categories.newToast': 'Category creation is not connected yet.',
   'categories.itemsCount': '{count} items',
@@ -422,8 +429,21 @@ export const en = {
   'settings.sessions': 'Active sessions',
   'settings.sessionsDesc': 'Session management is not connected.',
   'settings.previewNote':
-    'Your account profile is connected to the Luqma API. Appearance and notification preferences are stored locally; restaurant management APIs are not connected.',
+    'Your account profile is connected to the Luqma API. Appearance and notification preferences are stored locally. Restaurant operations are shown only when the backend verifies your own restaurant.',
   'settings.previewBadge': 'Signed in',
+  'settings.restaurantTitle': 'Restaurant settings',
+  'settings.restaurantSubtitle': 'Manage only the restaurant verified for your Owner account.',
+  'settings.restaurantUnavailable': 'Unavailable',
+  'settings.restaurantBlockedTitle': 'Restaurant management is locked',
+  'settings.restaurantBlockedBody':
+    'The dashboard will not guess a restaurant ID or use the public store list as proof of ownership.',
+  'settings.restaurantScopeLabel': 'Owner-to-store scope',
+  'settings.restaurantScopeMissing': 'GetProfile does not provide a verified store mapping.',
+  'settings.restaurantPermissionLabel': 'Store permissions',
+  'settings.restaurantPermissionMissing':
+    'Store Update and icon upload are not documented as Owner operations; activation remains unavailable.',
+  'settings.restaurantContractNote':
+    'No restaurant fields, ownership identifiers, passwords, or activation controls are shown until the backend supplies an authorized mapping and permission contract.',
   'settings.userId': 'User ID',
   'settings.address': 'Address',
   'profile.loading': 'Loading your profile…',
@@ -443,7 +463,7 @@ export const en = {
   'settings.profileNotConnected':
     'Profile editing is not available because the UpdateProfile contract was not supplied.',
 
-  'footer.preview': 'Demo data · management API not connected',
+  'footer.preview': 'Owner workspace · unsupported management APIs hidden',
   'footer.rights': '© 2026 Luqma. All rights reserved.',
   'footer.help': 'Help & support',
   'footer.helpToast': 'Help center is not connected yet.',
