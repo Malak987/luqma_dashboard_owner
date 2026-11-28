@@ -8,6 +8,7 @@ import {
   uploadMenuCategoryIcon,
 } from '../features/menuCategories/api/menuCategory.api';
 import {
+  createOwnerStoreScopeFromSession,
   createVerifiedOwnerStoreScope,
   type OwnerStoreScope,
 } from '../features/store/domain/ownership';
@@ -232,5 +233,97 @@ describe('MenuCategory request serialization', () => {
       kind: 'invalid-request',
     });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses the authenticated Login session Store ID for GetAll(onlyActive=false) and preserves uploaded path when provided', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+    configureApiAuth({ getToken: () => 'owner-token' });
+
+    const sessionScope = createOwnerStoreScopeFromSession({
+      token: 'owner-token',
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      storeId,
+      user: { userId: ownerId, userName: 'Owner', role: 'Owner' },
+    });
+
+    fetchMock.mockResolvedValueOnce(
+      response(
+        envelope([
+          {
+            id: categoryId,
+            storeId,
+            nameAr: 'مشويات',
+            nameEn: 'Grills',
+            imageUrl: '/images/categories/grills.png',
+            displayOrder: 1,
+            isActive: false,
+            itemsCount: 4,
+          },
+        ]),
+      ),
+    );
+
+    const all = await getMenuCategories(sessionScope, false);
+    expect(all).toHaveLength(1);
+    expect(all[0].isActive).toBe(false);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `https://luqma-api.runasp.net/api/MenuCategory/GetAll?storeId=${storeId}&onlyActive=false`,
+    );
+
+    fetchMock.mockResolvedValueOnce(response(envelope('/images/categories/uploaded.png', true)));
+    const file = new File(['icon'], 'grills.png', { type: 'image/png' });
+    const uploadedPath = await uploadMenuCategoryIcon(sessionScope, file);
+    expect(uploadedPath).toBe('/images/categories/uploaded.png');
+  });
+
+  it('rejects failed Create, Update, and SetActive mutations without false success', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+    configureApiAuth({ getToken: () => 'owner-token' });
+
+    fetchMock.mockResolvedValueOnce(response({}, 403));
+    await expect(createMenuCategory(scope, input)).rejects.toMatchObject({
+      kind: 'forbidden',
+      status: 403,
+    });
+
+    fetchMock.mockResolvedValueOnce(response(envelope(null, false)));
+    await expect(updateMenuCategory(scope, categoryId, input)).rejects.toMatchObject({
+      kind: 'business',
+    });
+
+    fetchMock.mockResolvedValueOnce(response({}, 500));
+    await expect(setMenuCategoryActive(scope, categoryId, true)).rejects.toMatchObject({
+      kind: 'http',
+      status: 500,
+    });
+  });
+
+  it('ignores undocumented or unsafe upload response values so existing images are preserved', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+    configureApiAuth({ getToken: () => 'owner-token' });
+    const file = new File(['icon'], 'grills.png', { type: 'image/png' });
+
+    // Plain message string with whitespace is not a usable path
+    fetchMock.mockResolvedValueOnce(response(envelope('Icon uploaded successfully', true)));
+    await expect(uploadMenuCategoryIcon(scope, file)).resolves.toBeUndefined();
+
+    // Dangerous scheme is rejected
+    fetchMock.mockResolvedValueOnce(response(envelope('javascript:alert(1)', true)));
+    await expect(uploadMenuCategoryIcon(scope, file)).resolves.toBeUndefined();
+
+    // Path traversal is rejected
+    fetchMock.mockResolvedValueOnce(response(envelope('/images/../secret.png', true)));
+    await expect(uploadMenuCategoryIcon(scope, file)).resolves.toBeUndefined();
+
+    // Non-envelope response is not assumed valid
+    fetchMock.mockResolvedValueOnce(response({ url: '/images/unverified.png' }));
+    await expect(uploadMenuCategoryIcon(scope, file)).resolves.toBeUndefined();
+
+    // HTTP failure throws and leaves existing image untouched
+    fetchMock.mockResolvedValueOnce(response({}, 403));
+    await expect(uploadMenuCategoryIcon(scope, file)).rejects.toMatchObject({
+      kind: 'forbidden',
+      status: 403,
+    });
   });
 });

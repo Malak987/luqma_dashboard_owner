@@ -183,9 +183,12 @@ html[data-theme='dark'] .navItemActive .navIcon {
 }
 
 .previewTitle {
+  overflow: hidden;
   color: var(--heading);
   font-size: 10.5px;
   font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .previewText {

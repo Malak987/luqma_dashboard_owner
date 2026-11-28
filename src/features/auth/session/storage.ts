@@ -1,3 +1,4 @@
+import { isEmptyUuid, isUuid } from '../../../lib/uuid';
 import type { AuthFailureReason, Session } from '../domain/session';
 import { isAllowedRole, isSessionExpired } from '../domain/session';
 
@@ -14,6 +15,17 @@ export interface LoadedSession {
   reason: AuthFailureReason | null;
 }
 
+interface StoredSessionBase {
+  token: string;
+  expiresAt: string;
+  storeId?: unknown;
+  user: {
+    userId: string;
+    userName: string;
+    role: string;
+  };
+}
+
 function defaultStorage(): StorageLike | null {
   if (typeof window === 'undefined') {
     return null;
@@ -21,7 +33,7 @@ function defaultStorage(): StorageLike | null {
   return window.sessionStorage;
 }
 
-function isSessionShape(value: unknown): value is Session {
+function isBaseSessionShape(value: unknown): value is StoredSessionBase {
   if (!value || typeof value !== 'object') {
     return false;
   }
@@ -45,9 +57,10 @@ function isSessionShape(value: unknown): value is Session {
 }
 
 /**
- * Only the access token, expiry, and non-sensitive identity fields are stored.
- * Passwords are never persisted. sessionStorage is readable by JavaScript and is
- * not equivalent to an HttpOnly cookie; the backend remains authoritative.
+ * Only the access token, expiry, Login Store ID, and non-sensitive identity
+ * fields are stored together under one session key. Passwords are never
+ * persisted. sessionStorage is readable by JavaScript and is not equivalent to
+ * an HttpOnly cookie; the backend remains authoritative.
  */
 export function storeSession(session: Session, storage: StorageLike | null = defaultStorage()): void {
   if (!storage) {
@@ -81,7 +94,7 @@ export function loadStoredSession(
     return { session: null, reason: 'invalid-session' };
   }
 
-  if (!isSessionShape(parsed)) {
+  if (!isBaseSessionShape(parsed)) {
     clearStoredSession(storage);
     return { session: null, reason: 'invalid-session' };
   }
@@ -91,10 +104,36 @@ export function loadStoredSession(
     return { session: null, reason: 'role-not-allowed' };
   }
 
-  if (isSessionExpired(parsed, now)) {
+  const rawStoreId = parsed.storeId;
+  if (
+    rawStoreId === undefined ||
+    rawStoreId === null ||
+    (typeof rawStoreId === 'string' && (rawStoreId.trim() === '' || isEmptyUuid(rawStoreId)))
+  ) {
+    clearStoredSession(storage);
+    return { session: null, reason: 'missing-store-id' };
+  }
+
+  if (!isUuid(rawStoreId)) {
+    clearStoredSession(storage);
+    return { session: null, reason: 'invalid-session' };
+  }
+
+  const candidateSession: Session = {
+    token: parsed.token,
+    expiresAt: parsed.expiresAt,
+    storeId: rawStoreId.trim(),
+    user: {
+      userId: parsed.user.userId,
+      userName: parsed.user.userName,
+      role: parsed.user.role,
+    },
+  };
+
+  if (isSessionExpired(candidateSession, now)) {
     clearStoredSession(storage);
     return { session: null, reason: 'expired' };
   }
 
-  return { session: parsed, reason: null };
+  return { session: candidateSession, reason: null };
 }

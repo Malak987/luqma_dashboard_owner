@@ -108,4 +108,111 @@ describe('central API client', () => {
     await expect(request).rejects.toBeInstanceOf(ApiError);
     await expect(request).rejects.toMatchObject({ kind: 'invalid-response' });
   });
+
+  it('prevents a stale 401 from Owner A from invalidating Owner B after an account switch', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+
+    let currentToken: string | null = 'owner-a-token';
+    const onUnauthorized = vi.fn(() => {
+      currentToken = null;
+    });
+    configureApiAuth({ getToken: () => currentToken, onUnauthorized });
+
+    let resolveOwnerAResponse!: (value: Response) => void;
+    fetchMock.mockReturnValueOnce(
+      new Promise<Response>((resolve) => {
+        resolveOwnerAResponse = resolve;
+      }),
+    );
+
+    const ownerARequest = apiRequest('/api/Store/GetById/store-a');
+
+    // Switch synchronously to Owner B while Owner A's request is still in flight
+    currentToken = 'owner-b-token';
+
+    // Owner A's stale request comes back 401
+    resolveOwnerAResponse(response({}, 401));
+    await expect(ownerARequest).rejects.toMatchObject({ kind: 'unauthorized', status: 401 });
+
+    // Owner B's active session must NOT have been invalidated
+    expect(onUnauthorized).not.toHaveBeenCalled();
+    expect(currentToken).toBe('owner-b-token');
+
+    // Subsequent request uses Owner B's token, never Owner A's token
+    fetchMock.mockResolvedValueOnce(response({ ok: true }));
+    await apiRequest('/api/Store/GetById/store-b');
+    const [, initB] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect((initB.headers as Record<string, string>).Authorization).toBe('Bearer owner-b-token');
+
+    // A 401 on the currently active Owner B token DOES trigger invalidation
+    fetchMock.mockResolvedValueOnce(response({}, 401));
+    await expect(apiRequest('/api/Store/GetById/store-b')).rejects.toMatchObject({
+      kind: 'unauthorized',
+      status: 401,
+    });
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+    expect(currentToken).toBeNull();
+  });
+
+  it('keeps configureApiAuth cleanup safe under Strict Mode and overlapping remounts', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+
+    // Simulate React StrictMode mount -> cleanup -> remount
+    const releaseFirst = configureApiAuth({ getToken: () => 'token-strict-1' });
+    releaseFirst();
+    const releaseSecond = configureApiAuth({ getToken: () => 'token-strict-2' });
+
+    fetchMock.mockResolvedValueOnce(response({ ok: true }));
+    await apiRequest('/api/Protected');
+    expect((fetchMock.mock.calls[0][1] as RequestInit).headers).toMatchObject({
+      Authorization: 'Bearer token-strict-2',
+    });
+
+    // Simulate overlapping remount where instance 3 mounts before instance 2 unmounts
+    const releaseThird = configureApiAuth({ getToken: () => 'token-remount-3' });
+    releaseSecond(); // Must NOT wipe instance 3's active configuration
+
+    fetchMock.mockResolvedValueOnce(response({ ok: true }));
+    await apiRequest('/api/Protected');
+    expect((fetchMock.mock.calls[1][1] as RequestInit).headers).toMatchObject({
+      Authorization: 'Bearer token-remount-3',
+    });
+
+    releaseThird();
+    await expect(apiRequest('/api/Protected')).rejects.toMatchObject({ kind: 'unauthorized' });
+  });
+
+  it('keeps centralized API client URL config intact after resetApiAuth for anonymous calls', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+    configureApiAuth({ getToken: () => 'stale-token' });
+    resetApiAuth();
+
+    // Protected calls cannot use the cleared token
+    await expect(apiRequest('/api/Protected')).rejects.toMatchObject({ kind: 'unauthorized' });
+
+    // Anonymous login still uses the centralized API_BASE_URL without Authorization
+    fetchMock.mockResolvedValueOnce(response({ isSucceeded: true }));
+    await apiRequest('/api/Account/Login', { method: 'POST', body: {}, auth: false });
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://luqma-api.runasp.net/api/Account/Login');
+    expect((init.headers as Record<string, string>).Authorization).toBeUndefined();
+  });
+
+  it('blocks an expired session token before the interval check and triggers unauthorized handling', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+    let expiresAt = Date.now() + 60_000;
+    const onUnauthorized = vi.fn();
+
+    configureApiAuth({
+      getToken: () => (Date.now() >= expiresAt ? null : 'live-token'),
+      onUnauthorized,
+    });
+
+    // Session expires before any background timer ticks
+    expiresAt = Date.now() - 1000;
+
+    await expect(apiRequest('/api/Protected')).rejects.toMatchObject({ kind: 'unauthorized' });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
 });

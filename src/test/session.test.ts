@@ -13,6 +13,8 @@ import {
   storeSession,
   type StorageLike,
 } from '../features/auth/session/storage';
+import { mapOwnerProfile } from '../features/profile/domain/profile';
+import { createOwnerStoreScopeFromSession } from '../features/store/domain/ownership';
 
 class MemoryStorage implements StorageLike {
   private values = new Map<string, string>();
@@ -34,10 +36,14 @@ class MemoryStorage implements StorageLike {
   }
 }
 
+const storeA = 'c4a7f2d0-6f1d-4e7b-9b2e-3d6c8f4a1b22';
+const storeB = 'd8f1a3c6-5b2e-4d9a-8c70-1f6b3e5a9d55';
+
 function session(overrides: Partial<Session> = {}): Session {
   return {
     token: 'test-jwt-value',
     expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    storeId: storeA,
     user: { userId: 'user-1', userName: 'Nour Hassan', role: 'Owner' },
     ...overrides,
   };
@@ -54,7 +60,7 @@ describe('role and session authorization', () => {
     expect(isAllowedRole(undefined)).toBe(false);
   });
 
-  it('decides access independently for every session state', () => {
+  it('decides access independently for every session state including missing storeId', () => {
     expect(decideAccess(null)).toEqual({ kind: 'login' });
     expect(decideAccess(session())).toEqual({ kind: 'allow' });
     expect(
@@ -72,6 +78,10 @@ describe('role and session authorization', () => {
         }),
       ),
     ).toEqual({ kind: 'forbidden' });
+    expect(decideAccess(session({ storeId: '' }))).toEqual({ kind: 'missing-store-id' });
+    expect(decideAccess(session({ storeId: 'not-a-uuid' }))).toEqual({
+      kind: 'missing-store-id',
+    });
   });
 
   it('detects expiry and malformed expiry values', () => {
@@ -93,10 +103,25 @@ describe('role and session authorization', () => {
     expect(safeReturnPath('/login')).toBe('/');
     expect(safeReturnPath(undefined)).toBe('/');
   });
+
+  it('derives an OwnerStoreScope only from a valid Owner session', () => {
+    const valid = session();
+    const scope = createOwnerStoreScopeFromSession(valid);
+    expect(scope.storeId).toBe(storeA);
+    expect(scope.ownerId).toBe('user-1');
+
+    expect(() =>
+      createOwnerStoreScopeFromSession(
+        session({ user: { userId: 'u', userName: 'A', role: 'Admin' as unknown as 'Owner' } }),
+      ),
+    ).toThrow();
+    expect(() => createOwnerStoreScopeFromSession(session({ storeId: '' }))).toThrow();
+    expect(() => createOwnerStoreScopeFromSession(null)).toThrow();
+  });
 });
 
 describe('session storage', () => {
-  it('stores and reloads a valid session', () => {
+  it('stores and restores a valid session with its exact Store ID', () => {
     const storage = new MemoryStorage();
     const value = session();
     storeSession(value, storage);
@@ -104,16 +129,86 @@ describe('session storage', () => {
     const loaded = loadStoredSession(storage);
     expect(loaded.reason).toBeNull();
     expect(loaded.session?.token).toBe('test-jwt-value');
+    expect(loaded.session?.storeId).toBe(storeA);
     expect(loaded.session?.user.role).toBe('Owner');
   });
 
-  it('clears an expired session and reports expiry', () => {
+  it('replaces the stored Store ID completely when switching accounts', () => {
+    const storage = new MemoryStorage();
+    storeSession(session({ token: 'token-a', storeId: storeA }), storage);
+    expect(loadStoredSession(storage).session?.storeId).toBe(storeA);
+
+    clearStoredSession(storage);
+    storeSession(
+      session({
+        token: 'token-b',
+        storeId: storeB,
+        user: { userId: 'user-2', userName: 'Owner Two', role: 'Owner' },
+      }),
+      storage,
+    );
+
+    const restored = loadStoredSession(storage);
+    expect(restored.reason).toBeNull();
+    expect(restored.session?.storeId).toBe(storeB);
+    expect(restored.session?.storeId).not.toBe(storeA);
+    expect(restored.session?.user.userId).toBe('user-2');
+  });
+
+  it('never lets GetProfile (which lacks storeId) overwrite the Login Store ID', () => {
+    const storage = new MemoryStorage();
+    const activeSession = session({ storeId: storeA });
+    storeSession(activeSession, storage);
+
+    const profile = mapOwnerProfile({
+      id: 'user-1',
+      name: 'Nour Hassan',
+      email: 'owner@example.com',
+      phoneNumber: '+20 100 000 0000',
+      address: 'Cairo',
+      role: 'Owner',
+      emailConfirmed: true,
+      isArchived: false,
+      createAt: '2026-11-11T16:31:10Z',
+      updateAt: '0001-01-01T00:00:00',
+    });
+
+    expect(profile).not.toHaveProperty('storeId');
+    expect(loadStoredSession(storage).session?.storeId).toBe(storeA);
+  });
+
+  it('clears an expired session (including its Store ID) and reports expiry', () => {
     const storage = new MemoryStorage();
     storeSession(session({ expiresAt: new Date(Date.now() - 1000).toISOString() }), storage);
 
     const loaded = loadStoredSession(storage);
     expect(loaded.session).toBeNull();
     expect(loaded.reason).toBe('expired');
+    expect(storage.has(SESSION_STORAGE_KEY)).toBe(false);
+  });
+
+  it('clears and rejects a stored session that is missing a Store ID', () => {
+    const storage = new MemoryStorage();
+    const withoutStore = {
+      token: 'test-jwt-value',
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      user: { userId: 'user-1', userName: 'Nour Hassan', role: 'Owner' },
+    };
+    storage.setItem(SESSION_STORAGE_KEY, JSON.stringify(withoutStore));
+
+    const loaded = loadStoredSession(storage);
+    expect(loaded.session).toBeNull();
+    expect(loaded.reason).toBe('missing-store-id');
+    expect(storage.has(SESSION_STORAGE_KEY)).toBe(false);
+  });
+
+  it('clears and rejects a stored session with a malformed Store ID', () => {
+    const storage = new MemoryStorage();
+    storage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session({ storeId: 'not-a-uuid' })));
+
+    const loaded = loadStoredSession(storage);
+    expect(loaded.session).toBeNull();
+    expect(loaded.reason).toBe('invalid-session');
     expect(storage.has(SESSION_STORAGE_KEY)).toBe(false);
   });
 
@@ -163,7 +258,7 @@ describe('session storage', () => {
     expect(storage.has(SESSION_STORAGE_KEY)).toBe(false);
   });
 
-  it('clears the local session on sign-out without needing an API call', () => {
+  it('clears the local session and Store ID on sign-out without needing an API call', () => {
     const storage = new MemoryStorage();
     storeSession(session(), storage);
     clearStoredSession(storage);

@@ -13,6 +13,7 @@ export interface LoginData {
   role: string;
   token: string;
   expiresAt: string;
+  storeId: string;
 }
 
 export type LoginResponse = ApiEnvelope<LoginData>;

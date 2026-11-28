@@ -2,6 +2,7 @@ import { apiRequest } from '../../../lib/api/client';
 import { isApiEnvelope } from '../../../lib/api/envelope';
 import { ApiError } from '../../../lib/api/errors';
 import { uploadMultipartFile } from '../../../lib/api/upload';
+import { sameUuid } from '../../../lib/uuid';
 import {
   requireOwnerStoreScope,
   isUuid,
@@ -70,13 +71,18 @@ function mapMenuCategory(value: unknown, scope: OwnerStoreScope): MenuCategoryDa
   }
 
   const item = value as Record<string, unknown>;
+  const storeMatches = isUuid(item.storeId) && sameUuid(item.storeId, scope.storeId);
+  if (!storeMatches) {
+    // A response for a different store is rejected rather than rendered. The
+    // backend must independently enforce the same ownership boundary.
+    throw new ApiError('ownership-unverified', 'The category belongs to another restaurant.');
+  }
+
   if (
     !isUuid(item.id) ||
-    !isUuid(item.storeId) ||
-    item.storeId !== scope.storeId ||
     typeof item.nameAr !== 'string' ||
     typeof item.nameEn !== 'string' ||
-    (item.imageUrl !== null && typeof item.imageUrl !== 'string') ||
+    (item.imageUrl !== null && item.imageUrl !== undefined && typeof item.imageUrl !== 'string') ||
     typeof item.displayOrder !== 'number' ||
     !Number.isInteger(item.displayOrder) ||
     typeof item.isActive !== 'boolean' ||
@@ -84,20 +90,15 @@ function mapMenuCategory(value: unknown, scope: OwnerStoreScope): MenuCategoryDa
     !Number.isInteger(item.itemsCount) ||
     item.itemsCount < 0
   ) {
-    // A response for a different store is rejected rather than rendered. The
-    // backend must independently enforce the same ownership boundary.
-    if (item.storeId !== scope.storeId) {
-      throw new ApiError('ownership-unverified', 'The category belongs to another restaurant.');
-    }
     throw new ApiError('invalid-response', 'Menu category item is missing required fields.');
   }
 
   return {
     id: item.id,
-    storeId: item.storeId,
+    storeId: item.storeId as string,
     nameAr: item.nameAr,
     nameEn: item.nameEn,
-    imageUrl: item.imageUrl,
+    imageUrl: item.imageUrl ?? null,
     displayOrder: item.displayOrder,
     isActive: item.isActive,
     itemsCount: item.itemsCount,
@@ -210,16 +211,15 @@ export async function setMenuCategoryActive(
 }
 
 /**
- * POST /api/MenuCategory/UploadIcon. The endpoint accepts a File field, but
- * the published contract does not define the response URL. The adapter
- * therefore treats a successful HTTP response as completion and never
- * fabricates an image URL for a later category mutation.
+ * POST /api/MenuCategory/UploadIcon. Sends the exact multipart `File` field
+ * and returns the backend-supplied image path when present. Never fabricates
+ * an image URL when the response omits one.
  */
 export async function uploadMenuCategoryIcon(
   scope: OwnerStoreScope | null | undefined,
   file: File,
   signal?: AbortSignal,
-): Promise<void> {
+): Promise<string | undefined> {
   requireOwnerStoreScope(scope);
-  await uploadMultipartFile('/api/MenuCategory/UploadIcon', file, signal);
+  return uploadMultipartFile('/api/MenuCategory/UploadIcon', file, signal);
 }

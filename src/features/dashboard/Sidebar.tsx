@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { LogOut, Sparkles, X } from 'lucide-react';
+import { LogOut, Store, X } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { Avatar } from '../../components/ui/Primitives';
 import { useToast } from '../../components/feedback/ToastContext';
@@ -7,6 +7,9 @@ import { IconButton } from '../../components/ui/IconButton';
 import { Logo } from '../../components/brand/Logo';
 import { cx } from '../../lib/cx';
 import { useProfile } from '../profile/session/context';
+import { getStoreMainCategory, getStoreName } from '../store/domain/store';
+import { useStore } from '../store/session/context';
+import { StoreLogo } from '../store/ui/StoreLogo';
 import { navigation } from './navigation';
 import { useAuthenticatedSession, useSession } from '../auth/session/context';
 import styles from './Sidebar.module.css';
@@ -17,13 +20,16 @@ interface SidebarProps {
 }
 
 export function Sidebar({ open, onClose }: SidebarProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { toast } = useToast();
   const navigate = useNavigate();
   const session = useAuthenticatedSession();
   const { signOut } = useSession();
   const { profile } = useProfile();
+  const { store, status: storeStatus } = useStore();
   const displayName = profile?.name ?? session.user.userName;
+  const storeName = store ? getStoreName(store, locale) : null;
+  const storeCategory = store ? getStoreMainCategory(store, locale) : null;
 
   return (
     <aside
@@ -80,13 +86,43 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
       <div className={styles.bottom}>
         <div className={styles.previewCard}>
-          <span className={styles.previewIcon} aria-hidden="true">
-            <Sparkles size={15} strokeWidth={1.8} />
-          </span>
-          <div className={styles.previewCopy}>
-            <p className={styles.previewTitle}>{t('nav.previewMode')}</p>
-            <p className={styles.previewText}>{t('nav.previewDescription')}</p>
-          </div>
+          {store && storeName ? (
+            <>
+              <StoreLogo name={storeName} iconUrl={store.iconUrl} size="sm" />
+              <div className={styles.previewCopy}>
+                <p className={styles.previewTitle} dir="auto">
+                  {storeName}
+                </p>
+                <p className={styles.previewText} dir="auto">
+                  {[
+                    store.isActive ? t('store.statusActive') : t('store.statusInactive'),
+                    store.isOpenNow === null
+                      ? null
+                      : store.isOpenNow
+                        ? t('store.statusOpen')
+                        : t('store.statusClosed'),
+                    storeCategory,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <span className={styles.previewIcon} aria-hidden="true">
+                <Store size={15} strokeWidth={1.8} />
+              </span>
+              <div className={styles.previewCopy}>
+                <p className={styles.previewTitle}>{t('store.yourRestaurant')}</p>
+                <p className={styles.previewText}>
+                  {storeStatus === 'error'
+                    ? t('store.sidebarStatusUnavailable')
+                    : t('store.sidebarStatusLoading')}
+                </p>
+              </div>
+            </>
+          )}
         </div>
 
         <button

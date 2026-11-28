@@ -26,6 +26,9 @@ import { LanguageSwitch } from '../../components/ui/LanguageSwitch';
 import { ThemeToggle } from '../../components/ui/ThemeToggle';
 import { useToast } from '../../components/feedback/ToastContext';
 import { useProfile } from '../profile/session/context';
+import { getStoreName } from '../store/domain/store';
+import { useStore } from '../store/session/context';
+import { StoreLogo } from '../store/ui/StoreLogo';
 import { currentNavItem } from './navigation';
 import { useAuthenticatedSession, useSession } from '../auth/session/context';
 import styles from './Topbar.module.css';
@@ -47,6 +50,7 @@ export function Topbar({ onOpenMenu }: TopbarProps) {
   const session = useAuthenticatedSession();
   const { signOut } = useSession();
   const { profile } = useProfile();
+  const { store } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
   const searchRef = useRef<HTMLInputElement>(null);
@@ -64,6 +68,7 @@ export function Topbar({ onOpenMenu }: TopbarProps) {
   const unread = items.filter((item) => !item.read).length;
   const displayName = profile?.name ?? session.user.userName;
   const displayEmail = profile?.email ?? t('topbar.apiSession');
+  const storeName = store ? getStoreName(store, locale) : null;
 
   useOnClickOutside(notificationsRef, () => setNotificationsOpen(false), notificationsOpen);
   useOnClickOutside(profileRef, () => setProfileOpen(false), profileOpen);
@@ -115,6 +120,15 @@ export function Topbar({ onOpenMenu }: TopbarProps) {
           />
           <span className={styles.breadcrumbCurrent}>{currentLabel}</span>
         </nav>
+
+        {store && storeName && (
+          <div className={styles.storeChip}>
+            <StoreLogo name={storeName} iconUrl={store.iconUrl} size="sm" />
+            <span className={styles.storeChipName} dir="auto">
+              {storeName}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className={styles.right}>

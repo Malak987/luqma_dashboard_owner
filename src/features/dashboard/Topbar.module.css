@@ -50,6 +50,29 @@
   white-space: nowrap;
 }
 
+.storeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  max-width: 240px;
+  height: 32px;
+  padding-inline: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.storeChipName {
+  overflow: hidden;
+  color: var(--heading);
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .right {
   display: flex;
   align-items: center;
@@ -472,7 +495,8 @@ html[data-theme='dark'] .unreadDot {
 }
 
 @media (max-width: 900px) {
-  .previewChip {
+  .previewChip,
+  .storeChip {
     display: none;
   }
 }

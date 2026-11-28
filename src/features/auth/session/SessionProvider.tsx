@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { configureApiAuth, resetApiAuth } from '../../../lib/api/client';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { configureApiAuth } from '../../../lib/api/client';
 import { login, logout } from '../api/auth.api';
-import type { AuthFailureReason, Session } from '../domain/session';
+import { AuthError, isSessionExpired, type AuthFailureReason, type Session } from '../domain/session';
 import { performLogout } from '../domain/logout';
-import { isSessionExpired } from '../domain/session';
 import { SessionContext, type SessionContextValue } from './context';
 import { clearStoredSession, loadStoredSession, storeSession } from './storage';
 
@@ -17,21 +16,38 @@ export function SessionProvider({ children }: SessionProviderProps) {
   const [authError, setAuthError] = useState<AuthFailureReason | null>(initial.reason);
   const [authReady, setAuthReady] = useState(false);
 
+  // Kept synchronously in sync with session transitions so child effects
+  // triggered immediately after login or account switching always read the
+  // latest token without a mount/cleanup reset gap.
+  const sessionRef = useRef<Session | null>(initial.session);
+  const sessionEpochRef = useRef(0);
+
   const clearAuthError = useCallback(() => setAuthError(null), []);
 
   const invalidateSession = useCallback((reason: AuthFailureReason) => {
-    // Remove the token provider immediately, not only after React rerenders.
-    // This prevents a protected request from retaining the old token in a
-    // closure while local state is being invalidated.
-    resetApiAuth();
+    sessionEpochRef.current += 1;
+    sessionRef.current = null;
     clearStoredSession();
     setSession(null);
     setAuthError(reason);
   }, []);
 
   const signIn = useCallback(async (email: string, password: string): Promise<Session> => {
+    // Clear any previous user's token and Store ID before starting a new
+    // sign-in so an account switch (or failed sign-in) can never retain or
+    // reuse the previous account's session or restaurant scope.
+    const epoch = ++sessionEpochRef.current;
+    sessionRef.current = null;
+    clearStoredSession();
+    setSession(null);
     setAuthError(null);
+
     const next = await login({ email, password });
+    if (sessionEpochRef.current !== epoch) {
+      throw new AuthError('invalid-session');
+    }
+
+    sessionRef.current = next;
     storeSession(next);
     setSession(next);
     return next;
@@ -43,31 +59,38 @@ export function SessionProvider({ children }: SessionProviderProps) {
    * passed explicitly because the session is already gone when the request runs.
    */
   const signOut = useCallback((): Promise<boolean> => {
-    const token = session?.token ?? null;
+    const token = sessionRef.current?.token ?? null;
 
     return performLogout({
       clearLocal: () => {
-        resetApiAuth();
+        sessionEpochRef.current += 1;
+        sessionRef.current = null;
         clearStoredSession();
         setSession(null);
         setAuthError(null);
       },
       remoteLogout: token ? () => logout(token) : undefined,
     });
-  }, [session]);
+  }, []);
 
   useEffect(() => {
-    configureApiAuth({
-      getToken: () => session?.token ?? null,
+    const releaseApiAuth = configureApiAuth({
+      getToken: () => {
+        const current = sessionRef.current;
+        if (!current || isSessionExpired(current)) {
+          return null;
+        }
+        return current.token;
+      },
       onUnauthorized: () => invalidateSession('expired'),
     });
     setAuthReady(true);
 
     return () => {
-      resetApiAuth();
+      releaseApiAuth();
       setAuthReady(false);
     };
-  }, [invalidateSession, session]);
+  }, [invalidateSession]);
 
   useEffect(() => {
     if (!session) {

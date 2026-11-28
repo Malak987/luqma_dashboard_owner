@@ -1,3 +1,5 @@
+import { apiRequest } from '../../../lib/api/client';
+import { isApiEnvelope } from '../../../lib/api/envelope';
 import { ApiError } from '../../../lib/api/errors';
 import { createFileFormData } from '../../../lib/api/upload';
 import {
@@ -5,11 +7,40 @@ import {
   isUuid,
   type OwnerStoreScope,
 } from '../domain/ownership';
+import { mapOwnerStore, type OwnerStore } from '../domain/store';
 import type {
   OwnerStoreUpdateRequest,
   PriceLevel,
   SetStoreActiveRequest,
+  StoreDetailsResponse,
 } from './store.types';
+
+/**
+ * GET /api/Store/GetById/{id} — loads only the restaurant associated with the
+ * authenticated Owner's trusted Login Store ID. Never calls Store/GetAll.
+ */
+export async function getStoreById(
+  scope: OwnerStoreScope | null | undefined,
+  signal?: AbortSignal,
+): Promise<OwnerStore> {
+  const verifiedScope = requireOwnerStoreScope(scope);
+  const response = await apiRequest<StoreDetailsResponse>(
+    `/api/Store/GetById/${verifiedScope.storeId}`,
+    { signal },
+  );
+
+  if (!isApiEnvelope(response)) {
+    throw new ApiError('invalid-response', 'GetById returned an invalid envelope.');
+  }
+  if (!response.isSucceeded) {
+    throw new ApiError('business', 'GetById failed.');
+  }
+  if (!response.data) {
+    throw new ApiError('invalid-response', 'GetById returned no restaurant data.');
+  }
+
+  return mapOwnerStore(response.data, verifiedScope);
+}
 
 function invalidStoreUpdate(): ApiError {
   return new ApiError('invalid-request', 'Store update fields are invalid.');
