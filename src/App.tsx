@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import { LoginRoute } from './features/auth/routes/LoginRoute';
 import { RequireAuth } from './features/auth/routes/RequireAuth';
 import { ProfileProvider } from './features/profile/session/ProfileProvider';
+import { StoreProvider } from './features/store/session/StoreProvider';
 import { DashboardLayout } from './features/dashboard/DashboardLayout';
 import { NotFoundPage } from './features/not-found/NotFoundPage';
 
@@ -18,7 +19,9 @@ export default function App() {
         <Route
           element={
             <ProfileProvider>
-              <DashboardLayout />
+              <StoreProvider>
+                <DashboardLayout />
+              </StoreProvider>
             </ProfileProvider>
           }
         >

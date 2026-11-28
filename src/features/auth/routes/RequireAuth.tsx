@@ -13,7 +13,11 @@ export function RequireAuth() {
   const decision = decideAccess(session);
 
   useEffect(() => {
-    if (decision.kind === 'expired' || decision.kind === 'forbidden') {
+    if (
+      decision.kind === 'expired' ||
+      decision.kind === 'forbidden' ||
+      decision.kind === 'missing-store-id'
+    ) {
       invalidateSession(decision.kind);
     }
   }, [decision.kind, invalidateSession]);
@@ -34,6 +38,10 @@ export function RequireAuth() {
 
   if (decision.kind === 'forbidden') {
     return <Navigate to="/login?reason=forbidden" replace />;
+  }
+
+  if (decision.kind === 'missing-store-id') {
+    return <Navigate to="/login?reason=missing-store-id" replace />;
   }
 
   return <Outlet />;

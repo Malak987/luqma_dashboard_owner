@@ -9,21 +9,25 @@ interface ApiAuthConfiguration {
   onUnauthorized?: UnauthorizedHandler;
 }
 
-let getToken: TokenProvider = () => null;
-let onUnauthorized: UnauthorizedHandler | null = null;
+let activeAuthConfiguration: ApiAuthConfiguration | null = null;
 
 /**
  * Single point where the authenticated session token and the 401 handler are
  * registered. Components and feature services never build Authorization headers.
+ * Returns an identity-checked cleanup function so an unmounting provider
+ * cannot accidentally clear a newer mounted provider's auth configuration.
  */
-export function configureApiAuth(configuration: ApiAuthConfiguration): void {
-  getToken = configuration.getToken;
-  onUnauthorized = configuration.onUnauthorized ?? null;
+export function configureApiAuth(configuration: ApiAuthConfiguration): () => void {
+  activeAuthConfiguration = configuration;
+  return () => {
+    if (activeAuthConfiguration === configuration) {
+      activeAuthConfiguration = null;
+    }
+  };
 }
 
 export function resetApiAuth(): void {
-  getToken = () => null;
-  onUnauthorized = null;
+  activeAuthConfiguration = null;
 }
 
 export interface ApiRequestOptions {
@@ -80,13 +84,16 @@ export async function apiRequest<T>(
   const requestBody =
     body === undefined ? undefined : isFormDataBody(body) ? body : JSON.stringify(body);
 
+  let resolvedToken: string | null = null;
   if (auth) {
-    const token = accessToken ?? getToken();
-    if (!token) {
-      onUnauthorized?.();
+    resolvedToken = accessToken ?? activeAuthConfiguration?.getToken() ?? null;
+    if (!resolvedToken) {
+      if (notifyUnauthorized) {
+        activeAuthConfiguration?.onUnauthorized?.();
+      }
       throw new ApiError('unauthorized', 'No authenticated session token is available.');
     }
-    headers.Authorization = `Bearer ${token}`;
+    headers.Authorization = `Bearer ${resolvedToken}`;
   }
 
   const controller = new AbortController();
@@ -97,7 +104,11 @@ export async function apiRequest<T>(
   }, timeoutMs);
 
   const forwardAbort = () => controller.abort();
-  signal?.addEventListener('abort', forwardAbort);
+  if (signal?.aborted) {
+    controller.abort();
+  } else {
+    signal?.addEventListener('abort', forwardAbort);
+  }
 
   try {
     let response: Response;
@@ -119,8 +130,12 @@ export async function apiRequest<T>(
     }
 
     if (response.status === 401) {
-      if (auth && notifyUnauthorized) {
-        onUnauthorized?.();
+      // Only invalidate the active session if this 401 corresponds to the
+      // currently active token; a late 401 from a previous account or logged-out
+      // session must never clear a newly signed-in Owner's session.
+      const activeToken = activeAuthConfiguration?.getToken() ?? null;
+      if (auth && notifyUnauthorized && resolvedToken !== null && activeToken === resolvedToken) {
+        activeAuthConfiguration?.onUnauthorized?.();
       }
       throw new ApiError('unauthorized', 'The session is not authorized.', 401);
     }

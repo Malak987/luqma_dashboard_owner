@@ -31,6 +31,7 @@ import styles from './LoginPage.module.css';
 const errorKeys: Record<AuthFailureReason, TranslationKey> = {
   'invalid-credentials': 'login.errorInvalidCredentials',
   'role-not-allowed': 'login.errorRoleNotAllowed',
+  'missing-store-id': 'login.errorMissingStoreId',
   'invalid-response': 'login.errorInvalidResponse',
   network: 'login.errorNetwork',
   timeout: 'login.errorTimeout',

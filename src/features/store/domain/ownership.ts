@@ -1,25 +1,21 @@
 import { ApiError } from '../../../lib/api/errors';
+import { isUuid } from '../../../lib/uuid';
+import type { Session } from '../../auth/domain/session';
 
-/** UUID format required by the Store and MenuCategory path/query schemas. */
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export { isUuid };
 
 export type VerifiedStoreId = string & { readonly __verifiedStoreId: unique symbol };
 
 /**
  * A store scope may only be created from a server-authoritative owner-to-store
- * mapping. The current Swagger document does not expose such a mapping, so no
- * production flow creates this value yet. API methods require this type rather
- * than accepting a storeId typed by a form or URL.
+ * mapping (such as the verified `data.storeId` returned by POST /api/Account/Login).
+ * API methods require this type rather than accepting a storeId typed by a form
+ * or URL.
  */
 export interface OwnerStoreScope {
   readonly storeId: VerifiedStoreId;
   readonly ownerId: string;
   readonly verification: 'backend-owner-mapping';
-}
-
-export function isUuid(value: unknown): value is string {
-  return typeof value === 'string' && UUID_PATTERN.test(value);
 }
 
 function ownershipError(): ApiError {
@@ -61,10 +57,30 @@ export function createVerifiedOwnerStoreScope(
   }
 
   return {
-    storeId: candidate.storeId as VerifiedStoreId,
+    storeId: candidate.storeId.trim() as VerifiedStoreId,
     ownerId: candidate.ownerId,
     verification: 'backend-owner-mapping',
   };
+}
+
+/**
+ * Derives the Owner's verified store scope exclusively from the authenticated
+ * Login session. Never accepts arbitrary client-provided store IDs.
+ */
+export function createOwnerStoreScopeFromSession(
+  session: Session | null | undefined,
+): OwnerStoreScope {
+  if (!session || session.user.role !== 'Owner') {
+    throw ownershipError();
+  }
+
+  return createVerifiedOwnerStoreScope(
+    {
+      storeId: session.storeId,
+      ownerId: session.user.userId,
+    },
+    session.user.userId,
+  );
 }
 
 /** Rejects missing, forged, malformed, or unverified scopes before any request. */

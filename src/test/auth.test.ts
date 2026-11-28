@@ -11,6 +11,9 @@ function response(body: unknown, status = 200): Response {
   } as unknown as Response;
 }
 
+const primaryStoreId = 'c4a7f2d0-6f1d-4e7b-9b2e-3d6c8f4a1b22';
+const secondaryStoreId = 'd8f1a3c6-5b2e-4d9a-8c70-1f6b3e5a9d55';
+
 function envelope(overrides: Record<string, unknown> = {}) {
   return {
     message: 'Success',
@@ -22,6 +25,7 @@ function envelope(overrides: Record<string, unknown> = {}) {
       role: 'Owner',
       token: 'test-jwt-value',
       expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      storeId: primaryStoreId,
       ...overrides,
     },
   };
@@ -36,7 +40,7 @@ afterEach(() => {
 });
 
 describe('POST /api/Account/Login', () => {
-  it('signs in an Owner with the documented request and response shape', async () => {
+  it('signs in an Owner and parses data.storeId from the documented response', async () => {
     vi.stubGlobal('fetch', fetchMock);
     fetchMock.mockResolvedValue(response(envelope()));
 
@@ -45,6 +49,7 @@ describe('POST /api/Account/Login', () => {
     expect(session.user.userName).toBe('Nour Hassan');
     expect(session.user.userId).toBe('user-1');
     expect(session.token).toBe('test-jwt-value');
+    expect(session.storeId).toBe(primaryStoreId);
     expect(new Date(session.expiresAt).getTime()).toBeGreaterThan(Date.now());
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -53,6 +58,60 @@ describe('POST /api/Account/Login', () => {
     expect(init.body).toBe(JSON.stringify({ email: 'owner@example.com', password: 'secret-value' }));
     const headers = init.headers as Record<string, string>;
     expect(headers.Authorization).toBeUndefined();
+  });
+
+  it('rejects a missing, null, empty, or Guid.Empty storeId safely', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+
+    const omitted = envelope();
+    delete (omitted.data as Record<string, unknown>).storeId;
+    fetchMock.mockResolvedValueOnce(response(omitted));
+    await expect(login({ email: 'owner@example.com', password: 'secret-value' })).rejects.toMatchObject({
+      reason: 'missing-store-id',
+    });
+
+    fetchMock.mockResolvedValueOnce(response(envelope({ storeId: null })));
+    await expect(login({ email: 'owner@example.com', password: 'secret-value' })).rejects.toMatchObject({
+      reason: 'missing-store-id',
+    });
+
+    fetchMock.mockResolvedValueOnce(response(envelope({ storeId: '   ' })));
+    await expect(login({ email: 'owner@example.com', password: 'secret-value' })).rejects.toMatchObject({
+      reason: 'missing-store-id',
+    });
+
+    fetchMock.mockResolvedValueOnce(
+      response(envelope({ storeId: '00000000-0000-0000-0000-000000000000' })),
+    );
+    await expect(login({ email: 'owner@example.com', password: 'secret-value' })).rejects.toMatchObject({
+      reason: 'missing-store-id',
+    });
+  });
+
+  it('rejects a malformed non-UUID storeId safely', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+    fetchMock.mockResolvedValue(response(envelope({ storeId: 'not-a-uuid' })));
+
+    await expect(login({ email: 'owner@example.com', password: 'secret-value' })).rejects.toMatchObject({
+      reason: 'invalid-response',
+    });
+  });
+
+  it('returns distinct Store IDs when switching Owner accounts', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+    fetchMock.mockResolvedValueOnce(
+      response(envelope({ userId: 'owner-a', userName: 'Owner A', storeId: primaryStoreId })),
+    );
+    fetchMock.mockResolvedValueOnce(
+      response(envelope({ userId: 'owner-b', userName: 'Owner B', storeId: secondaryStoreId })),
+    );
+
+    const first = await login({ email: 'a@example.com', password: 'secret-value' });
+    const second = await login({ email: 'b@example.com', password: 'secret-value' });
+
+    expect(first.storeId).toBe(primaryStoreId);
+    expect(second.storeId).toBe(secondaryStoreId);
+    expect(second.storeId).not.toBe(first.storeId);
   });
 
   it('rejects an Admin role and creates no dashboard session', async () => {

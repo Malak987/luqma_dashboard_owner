@@ -226,14 +226,6 @@ export function ProfileSettingsCard() {
             dir="auto"
             containerClassName={styles.fullSpan}
           />
-          <Input
-            label={t('settings.userId')}
-            value={profile.id}
-            readOnly
-            aria-readonly="true"
-            dir="ltr"
-            containerClassName={styles.fullSpan}
-          />
         </div>
 
         {showEmailNote && <p className={styles.formNote}>{t('profile.emailPendingNote')}</p>}

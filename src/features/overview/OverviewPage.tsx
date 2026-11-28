@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import {
-  ArrowRight,
   Banknote,
   CalendarDays,
   Download,
   Eye,
+  Info,
   ReceiptText,
   ShoppingBag,
   Sparkles,
@@ -36,7 +36,7 @@ import {
 } from '../../lib/format';
 import { orderStatusMeta } from '../../lib/status';
 import { Avatar, Badge, SegmentedControl, StatusBadge } from '../../components/ui/Primitives';
-import { Button, ButtonLink } from '../../components/ui/Button';
+import { Button } from '../../components/ui/Button';
 import { IconButton } from '../../components/ui/IconButton';
 import { DataTable, type Column } from '../../components/ui/DataTable';
 import { PageHeader, SectionCard } from '../../components/ui/Panel';
@@ -44,6 +44,7 @@ import { StatCard } from '../../components/ui/StatCard';
 import { RevenueChart } from '../../components/charts/RevenueChart';
 import { StatusDonut } from '../../components/charts/StatusDonut';
 import { OrderDrawer } from '../orders/OrderDrawer';
+import { RestaurantIdentityCard } from '../store/ui/RestaurantIdentityCard';
 import type { TranslationKey } from '../../i18n/en';
 import styles from './OverviewPage.module.css';
 
@@ -175,7 +176,6 @@ export default function OverviewPage() {
         eyebrow={t('overview.eyebrow')}
         title={t('overview.title')}
         description={t('overview.subtitle')}
-        meta={<Badge tone="accent">{t('overview.sampleBadge')}</Badge>}
         actions={
           <>
             <span className={styles.dateChip}>
@@ -193,7 +193,25 @@ export default function OverviewPage() {
         }
       />
 
-      <div className={styles.statsGrid}>
+      <RestaurantIdentityCard />
+
+      <section className={styles.sampleSection} aria-labelledby="overview-sample-title">
+        <div className={styles.sampleHeader} role="note">
+          <div className={styles.sampleHeading}>
+            <span className={styles.sampleIcon} aria-hidden="true">
+              <Info size={14} strokeWidth={1.8} />
+            </span>
+            <div>
+              <h2 className={styles.sampleTitle} id="overview-sample-title">
+                {t('overview.sampleSectionTitle')}
+              </h2>
+              <p className={styles.sampleBody}>{t('overview.sampleSectionBody')}</p>
+            </div>
+          </div>
+          <Badge tone="accent">{t('overview.sampleBadge')}</Badge>
+        </div>
+
+        <div className={styles.statsGrid}>
         {kpis.map((kpi) => {
           const meta = kpiMeta[kpi.id];
           const Icon = meta.icon;
@@ -276,16 +294,7 @@ export default function OverviewPage() {
           subtitle={t('overview.recentOrdersSubtitle')}
           className={styles.ordersCard}
           bodyClassName={styles.tableBody}
-          action={
-            <ButtonLink
-              to="/orders"
-              variant="ghost"
-              size="sm"
-              iconEnd={<ArrowRight className="icon-directional" size={14} strokeWidth={1.9} aria-hidden="true" />}
-            >
-              {t('common.viewAll')}
-            </ButtonLink>
-          }
+          action={<Badge tone="accent">{t('overview.sampleBadge')}</Badge>}
         >
           <DataTable
             columns={columns}
@@ -410,6 +419,7 @@ export default function OverviewPage() {
           </p>
         </SectionCard>
       </div>
+      </section>
 
       <OrderDrawer order={selectedOrder} onClose={() => setSelectedOrder(null)} />
     </div>
